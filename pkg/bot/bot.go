@@ -7,15 +7,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 	"github.com/rs/zerolog"
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
 )
@@ -50,47 +47,17 @@ type GaiaBot struct {
 	Config
 }
 
+// Bot represents the capabilities of a Gaia bot.
+type Bot interface {
+	Hook(ctx context.Context) echo.HandlerFunc
+}
+
 // NewBot creates a new bot to listen for PR created events.
 func NewBot(cfg Config, deps Dependencies) *GaiaBot {
 	return &GaiaBot{
 		Config:       cfg,
 		Dependencies: deps,
 	}
-}
-
-// Run will launch the webhook listener for Effrit which can listen for PR created events
-// and run a check-pr for it.
-func (b *GaiaBot) Run() error {
-	b.Logger.Info().Msg("Start listening...")
-	// Echo instance
-	e := echo.New()
-
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	// Routes
-	e.POST("/hook", b.Hook(b.Dependencies.Starter))
-
-	hostPort := fmt.Sprintf("%s:%s", b.Config.Hostname, b.Config.Port)
-
-	// Start TLS with certificate paths
-	if len(b.Config.ServerKeyPath) > 0 && len(b.Config.ServerCrtPath) > 0 {
-		e.Pre(middleware.HTTPSRedirect())
-		return e.StartTLS(hostPort, b.Config.ServerCrtPath, b.Config.ServerKeyPath)
-	}
-
-	// Start Auto TLS server
-	if b.Config.AutoTLS {
-		if len(b.Config.CacheDir) < 1 {
-			return errors.New("cache dir must be provided if autoTLS is enabled")
-		}
-		e.Pre(middleware.HTTPSRedirect())
-		e.AutoTLSManager.Cache = autocert.DirCache(b.Config.CacheDir)
-		return e.StartAutoTLS(hostPort)
-	}
-	// Start regular server
-	return e.Start(hostPort)
 }
 
 // Hook represent a github based webhook context.
@@ -133,7 +100,7 @@ type Payload struct {
 func signBody(secret, body []byte) []byte {
 	computed := hmac.New(sha1.New, secret)
 	_, _ = computed.Write(body)
-	return []byte(computed.Sum(nil))
+	return computed.Sum(nil)
 }
 
 func verifySignature(secret []byte, signature string, body []byte) bool {
@@ -187,7 +154,7 @@ func parseRequest(secret []byte, req *http.Request) (Hook, error) {
 }
 
 // GitWebHook creates a hook handler with an injected labeler.
-func (b *GaiaBot) Hook(starter providers.Starter) echo.HandlerFunc {
+func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		h, err := parseRequest([]byte(b.Config.HookSecret), c.Request())
 		if err != nil {
@@ -213,8 +180,7 @@ func (b *GaiaBot) Hook(starter providers.Starter) echo.HandlerFunc {
 			return c.String(http.StatusOK, "skipped; not in a pull request context")
 		}
 
-		ctx := context.Background()
-		if err := starter.Start(ctx, p.Issue.Sender.Login, p.Issue.Comment.URL, p.Issue.PullRequest.URL); err != nil {
+		if err := b.Dependencies.Starter.Start(ctx, p.Issue.Sender.Login, p.Issue.Comment.URL, p.Issue.PullRequest.URL); err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
 
