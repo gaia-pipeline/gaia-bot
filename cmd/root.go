@@ -13,6 +13,7 @@ var (
 		serverCrtPath string
 		port          string
 		hostname      string
+		hookSecret    string
 		database      struct {
 			hostname string
 			database string
@@ -31,11 +32,12 @@ func init() {
 	flag.StringVar(&rootArgs.serverKeyPath, "server-key-path", "", "--server-key-path /home/user/.server/server.key")
 	flag.StringVar(&rootArgs.serverCrtPath, "server-crt-path", "", "--server-crt-path /home/user/.server/server.crt")
 	flag.StringVar(&rootArgs.port, "port", "9998", "--port 443")
-	flag.StringVar(&rootArgs.hostname, "hostname", "", "--hostname staple-clipper.org")
-	flag.StringVar(&rootArgs.database.hostname, "staple-db-hostname", "localhost", "--staple-db-hostname localhost")
-	flag.StringVar(&rootArgs.database.database, "staple-db-database", "staples", "--staple-db-database staples")
-	flag.StringVar(&rootArgs.database.username, "staple-db-username", "staple", "--staple-db-username staple")
-	flag.StringVar(&rootArgs.database.password, "staple-db-password", "password123", "--staple-db-password password123")
+	flag.StringVar(&rootArgs.hostname, "hostname", "", "--hostname gaia-bot.org")
+	flag.StringVar(&rootArgs.database.hostname, "staple-db-hostname", "localhost", "--gaia-bot-db-hostname localhost")
+	flag.StringVar(&rootArgs.database.database, "staple-db-database", "bots", "--gaia-bot-db-database staples")
+	flag.StringVar(&rootArgs.database.username, "staple-db-username", "bot", "--gaia-bot-db-username staple")
+	flag.StringVar(&rootArgs.database.password, "staple-db-password", "password123", "--gaia-bot-db-password password123")
+	flag.StringVar(&rootArgs.hookSecret, "hook-secret", "", "--hook-secret asdf")
 	flag.Parse()
 }
 

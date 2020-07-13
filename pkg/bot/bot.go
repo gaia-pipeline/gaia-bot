@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -8,9 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -24,8 +23,8 @@ import (
 const (
 	// Ping event name.
 	Ping = "ping"
-	// PR event name.
-	PR = "pull_request"
+	// IssueComment event name.
+	IssueComment = "issue_comment"
 )
 
 // Config defines configuration which this bot needs to Run.
@@ -36,13 +35,13 @@ type Config struct {
 	ServerCrtPath string
 	AutoTLS       bool
 	CacheDir      string
+	HookSecret    string
 }
 
 // Dependencies defines the dependencies of this server.
 type Dependencies struct {
 	Logger  zerolog.Logger
-	Watcher providers.Watcher
-	Store   providers.Storer
+	Starter providers.Starter
 }
 
 // GaiaBot is the bot's main handler.
@@ -71,7 +70,7 @@ func (b *GaiaBot) Run() error {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.POST("/githook", b.GitWebHook(b.Dependencies.Watcher))
+	e.POST("/hook", b.Hook(b.Dependencies.Starter))
 
 	hostPort := fmt.Sprintf("%s:%s", b.Config.Hostname, b.Config.Port)
 
@@ -102,22 +101,33 @@ type Hook struct {
 	Payload   []byte
 }
 
-// Owner is the owner of the repository.
-type Owner struct {
+// Sender is the sender of the comment
+type Sender struct {
 	Login string `json:"login"`
 }
 
-// Repository is information about the repository attached to the PR.
-type Repository struct {
-	Name  string `json:"name"`
-	Owner Owner  `json:"owner"`
+// Comment is information about the comment including the URL which has to be GET
+// in order to retrieve the actual comment.
+type Comment struct {
+	URL string `json:"url"`
+}
+
+// Issue is information about the context of the comment. It should be checked if it's a PR.
+type Issue struct {
+	PullRequest PullRequest `json:"pull_request,omitempty"`
+	Sender      Sender      `json:"sender"`
+	Comment     Comment     `json:"comment"`
+}
+
+// PullRequest is the pull request context of an issue comment if the comment happened on a PR.
+type PullRequest struct {
+	URL string `json:"url,omitempty"`
 }
 
 // Payload contains information about the event like, user, commit id and so on.
 type Payload struct {
-	Action string     `json:"action"`
-	Number int        `json:"number"`
-	Repo   Repository `json:"repository"`
+	Action string `json:"action"`
+	Issue  Issue  `json:"issue"`
 }
 
 func signBody(secret, body []byte) []byte {
@@ -151,7 +161,7 @@ func parseRequest(secret []byte, req *http.Request) (Hook, error) {
 		return Hook{}, errors.New("no event")
 	}
 
-	if h.Event != PR {
+	if h.Event != IssueComment {
 		if h.Event == Ping {
 			return Hook{Event: "ping"}, nil
 		}
@@ -177,15 +187,9 @@ func parseRequest(secret []byte, req *http.Request) (Hook, error) {
 }
 
 // GitWebHook creates a hook handler with an injected labeler.
-func (b *GaiaBot) GitWebHook(watcher providers.Watcher) echo.HandlerFunc {
+func (b *GaiaBot) Hook(starter providers.Starter) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		log.Println("Received request from: ", c.Request().UserAgent())
-		secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
-		if secret == "" {
-			return c.String(http.StatusBadRequest, "GITHUB_WEBHOOK_SECRET is empty")
-		}
-
-		h, err := parseRequest([]byte(secret), c.Request())
+		h, err := parseRequest([]byte(b.Config.HookSecret), c.Request())
 		if err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
@@ -201,14 +205,18 @@ func (b *GaiaBot) GitWebHook(watcher providers.Watcher) echo.HandlerFunc {
 			return c.String(http.StatusBadRequest, "error in unmarshalling json payload")
 		}
 
-		if p.Action != "opened" {
-			return c.String(http.StatusOK, "skipped; status was not opened but: "+p.Action)
+		if p.Action != "created" {
+			return c.String(http.StatusOK, "skipped; status was not created but: "+p.Action)
 		}
 
-		//err = watcher.Comment(p.Repo.Owner.Login, p.Repo.Name, p.Number)
-		//if err != nil {
-		//	return c.String(http.StatusBadRequest, err.Error())
-		//}
+		if p.Issue.PullRequest.URL == "" {
+			return c.String(http.StatusOK, "skipped; not in a pull request context")
+		}
+
+		ctx := context.Background()
+		if err := starter.Start(ctx, p.Issue.Sender.Login, p.Issue.Comment.URL, p.Issue.PullRequest.URL); err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
 
 		return c.String(http.StatusOK, "successfully processed event")
 	}
