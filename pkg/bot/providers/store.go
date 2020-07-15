@@ -11,6 +11,4 @@ import (
 type Storer interface {
 	// GetUser returns the full user entity.
 	GetUser(ctx context.Context, handle string) (*models.User, error)
-	// Exists checks if a user with a handle exists.
-	Exists(ctx context.Context, handle string) (bool, error)
 }
