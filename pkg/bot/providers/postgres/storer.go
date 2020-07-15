@@ -36,6 +36,6 @@ func NewPostgresStore(cfg Config, deps Dependencies) *Store {
 func (s *Store) GetUser(ctx context.Context, handle string) (*models.User, error) {
 	return &models.User{
 		Handle:   "Skarlso",
-		Commands: []string{"/test"},
+		Commands: []string{"test"},
 	}, nil
 }
