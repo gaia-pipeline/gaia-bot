@@ -7,17 +7,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// command is a command that a commander can perform
-type command func(ctx context.Context) error
-
-// CommandMap represents a mapping between command names and the command that can be performed.
-var commandMap = map[string]command{}
-
-// Config has the configuration options for the starter
+// Config has the configuration options for the commander
 type Config struct {
 }
 
-// Dependencies defines the dependencies of this bot
+// Dependencies defines the dependencies of this command
 type Dependencies struct {
 	Logger zerolog.Logger
 }
@@ -28,19 +22,13 @@ type Commander struct {
 	Dependencies
 }
 
-// NewCommander creates a new GithubStarter
+// NewCommander creates a new Commander
 func NewCommander(cfg Config, deps Dependencies) *Commander {
 	c := &Commander{Config: cfg, Dependencies: deps}
-	commandMap["test"] = c.Test
 	return c
 }
 
-// HandleCommand takes a command and performs the appropriate action.
-func (c *Commander) HandleCommand(ctx context.Context, cmd string) error {
-	return nil
-}
-
-// Test deploys a PR to a test environment
-func (c *Commander) Test(ctx context.Context) error {
+// Test will deploy the pull request from the context of the comment made.
+func (c *Commander) Test(ctx context.Context, pullRequest string) error {
 	return nil
 }

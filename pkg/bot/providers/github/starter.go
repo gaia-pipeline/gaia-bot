@@ -82,8 +82,12 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 		return fmt.Errorf("user doesn't have access to command %s", cmd)
 	}
 	log.Info().Msg("Starting update...")
-	// user has access and we know the user... launch the update.
-	return s.Commander.HandleCommand(ctx, cmd)
+	// user has access and we know the user... launch the command.
+	switch cmd {
+	case "test":
+		return s.Dependencies.Commander.Test(ctx, pullURL)
+	}
+	return fmt.Errorf("command %s not found", cmd)
 }
 
 // extractComment gets a comment from a comment url.
