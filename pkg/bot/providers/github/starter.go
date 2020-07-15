@@ -80,12 +80,14 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	if !hasCommand {
 		return fmt.Errorf("user doesn't have access to command %s", cmd)
 	}
+	log.Info().Msg("Starting update...")
 	// user has access and we know the user... launch the update.
 	return nil
 }
 
 // extractComment gets a comment from a comment url.
 func (s *Starter) extractComment(ctx context.Context, commentUrl string) (string, error) {
+	s.Logger.Debug().Str("comment-url", commentUrl).Msg("extacting comment from url")
 	resp, err := http.Get(commentUrl)
 	if err != nil {
 		s.Logger.Error().Err(err).Msg("Failed to get comment body")
