@@ -8,4 +8,5 @@ require (
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/rs/zerolog v1.19.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 )

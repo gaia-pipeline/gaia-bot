@@ -26,13 +26,7 @@ const (
 
 // Config defines configuration which this bot needs to Run.
 type Config struct {
-	Port          string
-	Hostname      string
-	ServerKeyPath string
-	ServerCrtPath string
-	AutoTLS       bool
-	CacheDir      string
-	HookSecret    string
+	HookSecret string
 }
 
 // Dependencies defines the dependencies of this server.

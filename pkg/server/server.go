@@ -21,14 +21,18 @@ type Config struct {
 	ServerCrtPath string
 	AutoTLS       bool
 	CacheDir      string
-	HookSecret    string
 }
 
 // GaiaBot is a server.
 type GaiaBot struct {
 	Config
-	Logger zerolog.Logger
+	Dependencies
+}
+
+// Dependencies defines needed dependencies for this bot.
+type Dependencies struct {
 	Bot    bot.Bot
+	Logger zerolog.Logger
 }
 
 // Server defines a server which runs and accepts requests and monitors
@@ -37,9 +41,14 @@ type Server interface {
 	Run(context.Context) error
 }
 
+// NewServer creates a new gaia bot server.
+func NewServer(cfg Config, deps Dependencies) *GaiaBot {
+	return &GaiaBot{Config: cfg, Dependencies: deps}
+}
+
 // Run starts up the listening for PR actions.
 func (s *GaiaBot) Run(ctx context.Context) error {
-	s.Logger.Info().Msg("Start listening...")
+	s.Dependencies.Logger.Info().Msg("Start listening...")
 	// Echo instance
 	e := echo.New()
 
@@ -48,7 +57,7 @@ func (s *GaiaBot) Run(ctx context.Context) error {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.POST("/hook", s.Bot.Hook(ctx))
+	e.POST("/hook", s.Dependencies.Bot.Hook(ctx))
 
 	hostPort := fmt.Sprintf("%s:%s", s.Config.Hostname, s.Config.Port)
 
