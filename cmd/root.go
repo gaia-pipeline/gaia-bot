@@ -9,6 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commands"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/github"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/postgres"
 	"github.com/gaia-pipeline/gaia-bot/pkg/server"
@@ -42,9 +43,21 @@ func init() {
 
 func main() {
 	log := zerolog.New(os.Stderr)
-	storer := postgres.NewPostgresStore(rootArgs.store, postgres.Dependencies{Logger: log})
-	starter := github.NewGithubStarter(github.Config{}, github.Dependencies{Logger: log, Store: storer})
-	gaiaBot := bot.NewBot(rootArgs.bot, bot.Dependencies{Logger: log, Starter: starter})
+	storer := postgres.NewPostgresStore(rootArgs.store, postgres.Dependencies{
+		Logger: log,
+	})
+	commander := commands.NewCommander(commands.Config{}, commands.Dependencies{
+		Logger: log,
+	})
+	starter := github.NewGithubStarter(github.Config{}, github.Dependencies{
+		Logger:    log,
+		Store:     storer,
+		Commander: commander,
+	})
+	gaiaBot := bot.NewBot(rootArgs.bot, bot.Dependencies{
+		Logger:  log,
+		Starter: starter,
+	})
 
 	botServer := server.NewServer(rootArgs.server, server.Dependencies{
 		Logger: log,

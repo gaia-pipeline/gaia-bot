@@ -33,8 +33,9 @@ type Config struct {
 
 // Dependencies defines the dependencies of this bot
 type Dependencies struct {
-	Store  providers.Storer
-	Logger zerolog.Logger
+	Store     providers.Storer
+	Commander providers.Commander
+	Logger    zerolog.Logger
 }
 
 // Starter is a github based bot.
@@ -82,7 +83,7 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	}
 	log.Info().Msg("Starting update...")
 	// user has access and we know the user... launch the update.
-	return nil
+	return s.Commander.HandleCommand(ctx, cmd)
 }
 
 // extractComment gets a comment from a comment url.
