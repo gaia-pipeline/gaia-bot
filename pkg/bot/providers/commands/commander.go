@@ -35,6 +35,10 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 // Test will deploy the pull request from the context of the comment made.
 func (c *Commander) Test(ctx context.Context, number string, branch string) {
 	log := c.Logger.With().Str("number", number).Str("branch", branch).Logger()
+	if err := c.Commenter.AddComment(ctx, number, "Command received. Running Test."); err != nil {
+		log.Error().Err(err).Msg("Failed to add ack comment.")
+		return
+	}
 	tmp, err := ioutil.TempDir("checkout", "gaia")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
