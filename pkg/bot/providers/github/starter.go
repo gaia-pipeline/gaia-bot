@@ -82,11 +82,18 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	if !hasCommand {
 		return fmt.Errorf("user doesn't have access to command %s", cmd)
 	}
-	log.Info().Msg("Starting update...")
+
+	id, ref, err := s.extractPullRequestInfo(ctx, pullURL)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to extract pull request information.")
+		return err
+	}
+
 	// launch the Command with a new context and return
 	switch cmd {
 	case "test":
-		go s.Dependencies.Commander.Test(context.Background(), pullURL)
+		log.Info().Msg("Starting update...")
+		go s.Dependencies.Commander.Test(context.Background(), id, ref)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
