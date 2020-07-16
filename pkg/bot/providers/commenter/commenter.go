@@ -2,13 +2,10 @@ package commenter
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/google/go-github/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
-
-	"github.com/gaia-pipeline/gaia-bot/pkg/models"
 )
 
 // Config has the configuration options for the commenter
@@ -46,12 +43,8 @@ func NewCommenter(cfg Config, deps Dependencies) *Commenter {
 }
 
 // AddComment adds a comment to a PR to show progress of the bot.
-func (c *Commenter) AddComment(ctx context.Context, number string, comment string) error {
-	n, err := strconv.Atoi(number)
-	if err != nil {
-		return err
-	}
-	if _, _, err := c.Client.CreateComment(ctx, models.Owner, models.Repo, n, &github.IssueComment{Body: &comment}); err != nil {
+func (c *Commenter) AddComment(ctx context.Context, owner string, repo string, number int, comment string) error {
+	if _, _, err := c.Client.CreateComment(ctx, owner, repo, number, &github.IssueComment{Body: &comment}); err != nil {
 		c.Logger.Error().Err(err).Msg("Failed to add comment")
 		return err
 	}

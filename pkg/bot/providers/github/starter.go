@@ -83,7 +83,7 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 		return fmt.Errorf("user doesn't have access to command %s", cmd)
 	}
 
-	id, ref, err := s.extractPullRequestInfo(ctx, pullURL)
+	repo, err := s.extractPullRequestInfo(ctx, pullURL)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to extract pull request information.")
 		return err
@@ -93,7 +93,7 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	switch cmd {
 	case "test":
 		log.Info().Msg("Starting update...")
-		go s.Dependencies.Commander.Test(context.Background(), id, ref)
+		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number, repo.Head.Ref)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
@@ -105,24 +105,36 @@ type head struct {
 	Ref string `json:"ref"`
 }
 
+// owner has the owner information of the forked repository
+type owner struct {
+	Login string `json:"login"`
+}
+
+// repoInfo is the repo part of the base of the forked repository
+type repoInfo struct {
+	Owner owner  `json:"owner"`
+	Name  string `json:"name"`
+}
+
+// base is the base of the forked repository
+type base struct {
+	Repo repoInfo `json:"repo"`
+}
+
 // repo is a git repository
 type repo struct {
-	Head head `json:"head"`
+	Head   head `json:"head"`
+	Number int  `json:"number"`
+	Base   base `json:"base"`
 }
 
 // extractPullRequestInfo return with the details of the repository.
-func (s *Starter) extractPullRequestInfo(ctx context.Context, pullUrl string) (string, string, error) {
-	split := strings.Split(pullUrl, "/")
-	if len(split) < 1 {
-		s.Logger.Error().Str("url", pullUrl).Msg("Split length below 1.")
-		return "", "", fmt.Errorf("split length below 1. was %d", len(split))
-	}
-	id := split[len(split)-1]
+func (s *Starter) extractPullRequestInfo(ctx context.Context, pullUrl string) (repo, error) {
 	r := repo{}
 	if err := s.get(ctx, pullUrl, &r); err != nil {
-		return "", "", err
+		return repo{}, err
 	}
-	return id, r.Head.Ref, nil
+	return r, nil
 }
 
 // extractComment gets a comment from a comment url.
