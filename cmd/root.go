@@ -10,6 +10,7 @@ import (
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commands"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commenter"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/github"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/postgres"
 	"github.com/gaia-pipeline/gaia-bot/pkg/server"
@@ -17,11 +18,12 @@ import (
 
 var (
 	rootArgs struct {
-		devMode bool
-		bot     bot.Config
-		store   postgres.Config
-		server  server.Config
-		debug   bool
+		devMode   bool
+		bot       bot.Config
+		store     postgres.Config
+		server    server.Config
+		commenter commenter.Config
+		debug     bool
 	}
 )
 
@@ -38,6 +40,7 @@ func init() {
 	flag.StringVar(&rootArgs.store.Username, "staple-db-username", "bot", "--gaia-bot-db-username staple")
 	flag.StringVar(&rootArgs.store.Password, "staple-db-password", "password123", "--gaia-bot-db-password password123")
 	flag.StringVar(&rootArgs.bot.HookSecret, "hook-secret", "", "--hook-secret asdf")
+	flag.StringVar(&rootArgs.commenter.Token, "github-token", "", "--github-token asdf")
 	flag.Parse()
 }
 
@@ -46,8 +49,10 @@ func main() {
 	storer := postgres.NewPostgresStore(rootArgs.store, postgres.Dependencies{
 		Logger: log,
 	})
+	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
 	commander := commands.NewCommander(commands.Config{}, commands.Dependencies{
-		Logger: log,
+		Logger:    log,
+		Commenter: commenter,
 	})
 	starter := github.NewGithubStarter(github.Config{}, github.Dependencies{
 		Logger:    log,

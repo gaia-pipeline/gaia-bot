@@ -43,6 +43,6 @@ func NewCommenter(cfg Config, deps Dependencies) *Commenter {
 }
 
 // AddComment adds a comment to a PR to show progress of the bot.
-func (c *Commenter) AddComment(ctx context.Context, owner string, repo string, number int, comment string) error {
+func (c *Commenter) AddComment(ctx context.Context, number string, comment string) error {
 	return nil
 }
