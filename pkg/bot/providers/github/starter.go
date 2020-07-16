@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 
@@ -82,32 +83,77 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 		return fmt.Errorf("user doesn't have access to command %s", cmd)
 	}
 	log.Info().Msg("Starting update...")
-	// user has access and we know the user... launch the command.
+	// launch the Command with a new context and return
 	switch cmd {
 	case "test":
-		return s.Dependencies.Commander.Test(ctx, pullURL)
+		go s.Dependencies.Commander.Test(context.Background(), pullURL)
+	default:
+		return fmt.Errorf("command %s not found", cmd)
 	}
-	return fmt.Errorf("command %s not found", cmd)
+	return nil
+}
+
+// head is the head of the git repository
+type head struct {
+	Ref string `json:"ref"`
+}
+
+// repo is a git repository
+type repo struct {
+	Head head `json:"head"`
+}
+
+// extractPullRequestInfo return with the details of the repository.
+func (s *Starter) extractPullRequestInfo(ctx context.Context, pullUrl string) (string, string, error) {
+	split := strings.Split(pullUrl, "/")
+	if len(split) < 1 {
+		s.Logger.Error().Str("url", pullUrl).Msg("Split length below 1.")
+		return "", "", fmt.Errorf("split length below 1. was %d", len(split))
+	}
+	id := split[len(split)-1]
+	r := repo{}
+	if err := s.get(ctx, pullUrl, &r); err != nil {
+		return "", "", err
+	}
+	return id, r.Head.Ref, nil
 }
 
 // extractComment gets a comment from a comment url.
 func (s *Starter) extractComment(ctx context.Context, commentUrl string) (string, error) {
 	s.Logger.Debug().Str("comment-url", commentUrl).Msg("extacting comment from url")
-	resp, err := http.Get(commentUrl)
-	if err != nil {
-		s.Logger.Error().Err(err).Msg("Failed to get comment body")
+	c := comment{}
+	if err := s.get(ctx, commentUrl, &c); err != nil {
 		return "", err
+	}
+	return c.Body, nil
+}
+
+func (s *Starter) get(ctx context.Context, url string, v interface{}) error {
+	log := s.Logger.With().Str("url", url).Logger()
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+	}
+	client := &http.Client{Transport: tr}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get body")
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		s.Logger.Error().Err(err).Msg("Failed to get response body")
-		return "", err
+		log.Error().Err(err).Msg("Failed to get response body")
+		return err
 	}
-	c := comment{}
-	if err := json.Unmarshal(body, &c); err != nil {
-		s.Logger.Error().Err(err).Msg("Failed to unmarshall comment body")
-		return "", err
+	if err := json.Unmarshal(body, &v); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshall body")
+		return err
 	}
-	return c.Body, nil
+	return nil
 }

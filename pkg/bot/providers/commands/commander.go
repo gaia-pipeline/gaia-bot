@@ -3,6 +3,7 @@ package commands
 
 import (
 	"context"
+	"io/ioutil"
 
 	"github.com/rs/zerolog"
 )
@@ -29,6 +30,16 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, pullRequest string) error {
+func (c *Commander) Test(ctx context.Context, pullRequest string) {
+	log := c.Logger.With().Str("pull-request", pullRequest).Logger()
+	tmp, err := ioutil.TempDir("checkout", "gaia")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
+		return err
+	}
+	// pull gaia main repo
+	// do a fetch
+	// switch to branch
+
 	return nil
 }
