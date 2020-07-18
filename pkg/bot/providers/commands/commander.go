@@ -48,7 +48,9 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		}
 		return
 	}
-	log.Debug().Str("tmp", tmp).Msg("Temp dir created.")
+	log.Debug().Msg(tmp)
+	// TODO: Screw it, use bash.
+
 	// pull gaia main repo
 	// do a fetch
 	// switch to branch
