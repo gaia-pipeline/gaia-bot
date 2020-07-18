@@ -13,7 +13,7 @@ RUN add-apt-repository \
 RUN apt-get update
 RUN apt-get install -y docker-ce docker-ce-cli
 
-ADD ./bin/linux/${GOARCH}/gaia-bit /app/
+ADD ./build/linux/${GOARCH}/gaia-bot /app/
 
 WORKDIR /app/
 ENTRYPOINT [ "/app/gaia-bot" ]
