@@ -3,7 +3,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -12,8 +11,6 @@ import (
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
 )
-
-const imageTag = "gaiapipeline/testing:%s-%d"
 
 // Config has the configuration options for the commander
 type Config struct {
@@ -41,7 +38,7 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string) {
+func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string, tag string) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Running Test."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
@@ -57,7 +54,6 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		return
 	}
 	// Just commit changes to the flux repository with the new image tag.
-	tag := fmt.Sprintf(imageTag, branch, number)
 	log.Debug().Msgf("pusing image tag %s", tag)
 
 	cmd := exec.Command("/usr/local/bin/push_tag.sh")
