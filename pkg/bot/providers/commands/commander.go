@@ -2,12 +2,7 @@
 package commands
 
 import (
-	"bytes"
 	"context"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"strconv"
 
 	"github.com/rs/zerolog"
 
@@ -45,35 +40,5 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
-	tmp, err := ioutil.TempDir("checkout", "gaia")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
-		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to checkout the PR"); err != nil {
-			log.Error().Err(err).Msg("Failed to add comment.")
-			return
-		}
-		return
-	}
-	log.Debug().Str("tmp", tmp).Msg("Running fetch in folder.")
-	n := strconv.Itoa(number)
-	cmd := exec.Command("/usr/local/bin/fetch_pr.sh")
-	cmd.Env = append(os.Environ(), ""+
-		"PR_NUMBER="+n,
-		"REPOSITORY="+repo,
-		"BRANCH="+branch,
-		"FOLDER="+tmp,
-		"DOCKER_TOKEN="+c.Token,
-		"DOCKER_USERNAME="+c.Username,
-	)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		log.Error().Err(err).Msg("Failed to run fetcher.")
-		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
-			log.Error().Err(err).Msg("Failed to add comment.")
-			return
-		}
-		return
-	}
-	log.Debug().Str("image", out.String()).Msg("Got image tag... contacting flux.")
+	// Just commit changes to the flux repository with the new image tag.
 }
