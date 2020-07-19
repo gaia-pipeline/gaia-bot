@@ -23,6 +23,7 @@ var (
 		store     postgres.Config
 		server    server.Config
 		commenter commenter.Config
+		commander commands.Config
 		debug     bool
 	}
 )
@@ -41,6 +42,8 @@ func init() {
 	flag.StringVar(&rootArgs.store.Password, "staple-db-password", "password123", "--gaia-bot-db-password password123")
 	flag.StringVar(&rootArgs.bot.HookSecret, "hook-secret", "", "--hook-secret asdf")
 	flag.StringVar(&rootArgs.commenter.Token, "github-token", "", "--github-token asdf")
+	flag.StringVar(&rootArgs.commander.Token, "docker-token", "", "--docker-token asdf")
+	flag.StringVar(&rootArgs.commander.Username, "docker-username", "", "--docker-username asdf")
 	flag.Parse()
 }
 
@@ -50,7 +53,7 @@ func main() {
 		Logger: log,
 	})
 	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
-	commander := commands.NewCommander(commands.Config{}, commands.Dependencies{
+	commander := commands.NewCommander(rootArgs.commander, commands.Dependencies{
 		Logger:    log,
 		Commenter: commenter,
 	})

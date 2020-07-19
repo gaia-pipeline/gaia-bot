@@ -14,6 +14,7 @@ RUN apt-get update
 RUN apt-get install -y docker-ce docker-ce-cli
 
 ADD ./build/linux/${GOARCH}/gaia-bot /app/
+ADD ./scripts/fetch_pr.sh /usr/local/bin
 
 WORKDIR /app/
 ENTRYPOINT [ "/app/gaia-bot" ]

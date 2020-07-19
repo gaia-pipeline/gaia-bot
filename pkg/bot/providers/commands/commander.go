@@ -2,8 +2,12 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"io/ioutil"
+	"os"
+	"os/exec"
+	"strconv"
 
 	"github.com/rs/zerolog"
 
@@ -12,6 +16,8 @@ import (
 
 // Config has the configuration options for the commander
 type Config struct {
+	Token    string
+	Username string
 }
 
 // Dependencies defines the dependencies of this command
@@ -48,10 +54,26 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		}
 		return
 	}
-	log.Debug().Msg(tmp)
-	// TODO: Screw it, use bash.
-
-	// pull gaia main repo
-	// do a fetch
-	// switch to branch
+	log.Debug().Str("tmp", tmp).Msg("Running fetch in folder.")
+	n := strconv.Itoa(number)
+	cmd := exec.Command("/usr/local/bin/fetch_pr.sh")
+	cmd.Env = append(os.Environ(), ""+
+		"PR_NUMBER="+n,
+		"REPOSITORY="+repo,
+		"BRANCH="+branch,
+		"FOLDER="+tmp,
+		"DOCKER_TOKEN="+c.Token,
+		"DOCKER_USERNAME="+c.Username,
+	)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		log.Error().Err(err).Msg("Failed to run fetcher.")
+		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
+			log.Error().Err(err).Msg("Failed to add comment.")
+			return
+		}
+		return
+	}
+	log.Debug().Str("image", out.String()).Msg("Got image tag... contacting flux.")
 }
