@@ -18,6 +18,6 @@ fi
 
 # checkout infra code
 cd "${folder}"
+mkdir -p infra
+cd infra
 git clone "${repo}"
-
-

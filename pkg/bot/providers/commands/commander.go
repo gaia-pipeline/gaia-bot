@@ -3,14 +3,18 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/rs/zerolog"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
 )
+
+const imageTag = "gaiapipeline/testing:%s-%d"
 
 // Config has the configuration options for the commander
 type Config struct {
@@ -44,7 +48,7 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
-	tmp, err := ioutil.TempDir("checkout", "gaia-infrastructure")
+	tmp, err := ioutil.TempDir("checkout", "build")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to checkout the PR"); err != nil {
@@ -53,13 +57,35 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		}
 		return
 	}
-	// Just commit changes to the flux repository with the new image tag.
-	log.Debug().Msgf("pusing image tag %s", tag)
+	buildTag := fmt.Sprintf(imageTag, branch, number)
 
-	cmd := exec.Command("/usr/local/bin/push_tag.sh")
+	// Run the docker build
+	n := strconv.Itoa(number)
+	cmd := exec.Command("/usr/local/bin/fetch_pr.sh")
+	cmd.Env = append(os.Environ(), ""+
+		"PR_NUMBER="+n,
+		"REPOSITORY="+repo,
+		"BRANCH="+branch,
+		"FOLDER="+tmp,
+		"DOCKER_TOKEN="+c.Token,
+		"DOCKER_USERNAME="+c.Username,
+	)
+	if err := cmd.Run(); err != nil {
+		log.Error().Err(err).Msg("Failed to run fetcher.")
+		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
+			log.Error().Err(err).Msg("Failed to add comment.")
+			return
+		}
+		return
+	}
+
+	// Run the pusher
+	log.Debug().Msgf("pusing image tag %s", buildTag)
+
+	cmd = exec.Command("/usr/local/bin/push_tag.sh")
 	cmd.Env = append(os.Environ(), ""+
 		"REPO="+c.InfraRepo,
-		"TAG="+tag,
+		"TAG="+buildTag,
 		"FOLDER="+tmp,
 	)
 	if err := cmd.Run(); err != nil {
