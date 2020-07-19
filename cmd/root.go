@@ -42,8 +42,9 @@ func init() {
 	flag.StringVar(&rootArgs.store.Password, "staple-db-password", "password123", "--gaia-bot-db-password password123")
 	flag.StringVar(&rootArgs.bot.HookSecret, "hook-secret", "", "--hook-secret asdf")
 	flag.StringVar(&rootArgs.commenter.Token, "github-token", "", "--github-token asdf")
-	flag.StringVar(&rootArgs.commander.Token, "docker-token", "", "--docker-token asdf")
-	flag.StringVar(&rootArgs.commander.Username, "docker-username", "", "--docker-username asdf")
+	flag.StringVar(&rootArgs.commander.Token, "bot-token", "", "--bot-token asdf")
+	flag.StringVar(&rootArgs.commander.Username, "bot-username", "", "--bot-username asdf")
+	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "https://github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository https:...")
 	flag.Parse()
 }
 
