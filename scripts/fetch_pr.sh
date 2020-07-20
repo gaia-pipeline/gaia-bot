@@ -60,12 +60,13 @@ echo 'export NVM_DIR=$HOME/.nvm' >> ~/.bash_profile
 touch $HOME/.nvmrc
 echo 'source $NVM_DIR/nvm.sh' >> ~/.bash_profile
 source ~/.bash_profile
-nvm install v12.6.0
-npm cache clean --force
+nvm install v12.6.0 || true
+npm cache clean --force || true
 make download
 make release
 
 # build docker image
+service docker start
 docker build -t "${tag}" ./docker -f ./docker/Dockerfile
 
 # push image to gaia test repo

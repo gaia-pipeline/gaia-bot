@@ -74,10 +74,13 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"DOCKER_TOKEN="+c.DockerToken,
 		"DOCKER_USERNAME="+c.DockerUsername,
 	)
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Debug().Str("output", out.String()).Msg("Output of the command...")
+		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
+		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
 		log.Error().Err(err).Msg("Failed to run fetcher.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
@@ -97,10 +100,13 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"GIT_TOKEN="+c.GitToken,
 		"GIT_USERNAME="+c.GitUsername,
 	)
-	out = bytes.Buffer{}
-	cmd.Stdout = &out
+	stdout = bytes.Buffer{}
+	stderr = bytes.Buffer{}
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Debug().Str("output", out.String()).Msg("Output of the command...")
+		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
+		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
 		log.Error().Err(err).Msg("Failed to run pusher.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to push new code to gaia infrastructure repository."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
