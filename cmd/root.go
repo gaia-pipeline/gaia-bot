@@ -5,6 +5,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
+
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 
@@ -24,6 +26,7 @@ var (
 		server    server.Config
 		commenter commenter.Config
 		commander commands.Config
+		auth      auth.Config
 		debug     bool
 	}
 )
@@ -41,11 +44,10 @@ func init() {
 	flag.StringVar(&rootArgs.store.Username, "gaia-bot-db-username", "bot", "--gaia-bot-db-username bot")
 	flag.StringVar(&rootArgs.store.Password, "gaia-bot-db-password", "password123", "--gaia-bot-db-password password123")
 	flag.StringVar(&rootArgs.bot.HookSecret, "hook-secret", "", "--hook-secret asdf")
-	flag.StringVar(&rootArgs.commenter.Token, "github-token", "", "--github-token asdf")
-	flag.StringVar(&rootArgs.commander.GitToken, "git-token", "", "--git-token asdf")
-	flag.StringVar(&rootArgs.commander.GitUsername, "git-username", "", "--git-username asdf")
-	flag.StringVar(&rootArgs.commander.DockerToken, "docker-token", "", "--docker-token asdf")
-	flag.StringVar(&rootArgs.commander.DockerUsername, "docker-username", "", "--docker-username asdf")
+	flag.StringVar(&rootArgs.auth.GithubToken, "githu-token", "", "--github-token asdf")
+	flag.StringVar(&rootArgs.auth.GithubUsername, "githu-username", "", "--github-username asdf")
+	flag.StringVar(&rootArgs.auth.DockerToken, "docker-token", "", "--docker-token asdf")
+	flag.StringVar(&rootArgs.auth.DockerUsername, "docker-username", "", "--docker-username asdf")
 	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository github.com/")
 	flag.Parse()
 }
@@ -55,7 +57,9 @@ func main() {
 	storer := postgres.NewPostgresStore(rootArgs.store, postgres.Dependencies{
 		Logger: log,
 	})
+	rootArgs.commenter.Auth = rootArgs.auth
 	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
+	rootArgs.commander.Auth = rootArgs.auth
 	commander := commands.NewCommander(rootArgs.commander, commands.Dependencies{
 		Logger:    log,
 		Commenter: commenter,

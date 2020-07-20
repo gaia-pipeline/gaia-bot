@@ -13,17 +13,15 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 )
 
 const imageTag = "gaiapipeline/testing:%s-%d"
 
 // Config has the configuration options for the commander
 type Config struct {
-	GitToken       string
-	GitUsername    string
-	DockerToken    string
-	DockerUsername string
-	InfraRepo      string
+	Auth      auth.Config
+	InfraRepo string
 }
 
 // Dependencies defines the dependencies of this command
@@ -71,8 +69,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"REPOSITORY="+repo,
 		"BRANCH="+branch,
 		"FOLDER="+tmp,
-		"DOCKER_TOKEN="+c.DockerToken,
-		"DOCKER_USERNAME="+c.DockerUsername,
+		"DOCKER_TOKEN="+c.Auth.DockerToken,
+		"DOCKER_USERNAME="+c.Auth.DockerUsername,
 	)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -97,8 +95,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"REPO="+c.InfraRepo,
 		"TAG="+tag,
 		"FOLDER="+tmp,
-		"GIT_TOKEN="+c.GitToken,
-		"GIT_USERNAME="+c.GitUsername,
+		"GIT_TOKEN="+c.Auth.GithubToken,
+		"GIT_USERNAME="+c.Auth.GithubUsername,
 	)
 	stdout = bytes.Buffer{}
 	stderr = bytes.Buffer{}

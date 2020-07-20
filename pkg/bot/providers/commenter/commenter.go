@@ -6,11 +6,13 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
+
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 )
 
 // Config has the configuration options for the commenter
 type Config struct {
-	Token string
+	Auth auth.Config
 }
 
 // Dependencies defines the dependencies of this commenter
@@ -35,7 +37,7 @@ type Commenter struct {
 func NewCommenter(cfg Config, deps Dependencies) *Commenter {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: cfg.Token},
+		&oauth2.Token{AccessToken: cfg.Auth.GithubToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
