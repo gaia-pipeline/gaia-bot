@@ -51,6 +51,7 @@ mkdir -p gaia
 cd gaia
 git clone https://github.com/gaia-pipeline/gaia.git
 cd gaia
+gaia=$(pwd)
 git fetch origin pull/"${pr}"/head:"${branch}"
 git checkout "${branch}"
 
@@ -67,7 +68,7 @@ make download
 make release
 
 # build docker image
-docker build -t "${tag}" ./docker -f ./docker/Dockerfile
+docker build -t "${tag}" "${gaia}/docker" -f "${gaia}/docker/Dockerfile"
 
 # push image to gaia test repo
 echo "${docker_token}" | docker login --username "${docker_username}" --password-stdin
