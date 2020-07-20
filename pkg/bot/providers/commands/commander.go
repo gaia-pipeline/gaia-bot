@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -73,7 +74,10 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"DOCKER_TOKEN="+c.DockerToken,
 		"DOCKER_USERNAME="+c.DockerUsername,
 	)
+	var out bytes.Buffer
+	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
+		log.Debug().Str("output", out.String()).Msg("Output of the command...")
 		log.Error().Err(err).Msg("Failed to run fetcher.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
@@ -93,7 +97,10 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"GIT_TOKEN="+c.GitToken,
 		"GIT_USERNAME="+c.GitUsername,
 	)
+	out = bytes.Buffer{}
+	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
+		log.Debug().Str("output", out.String()).Msg("Output of the command...")
 		log.Error().Err(err).Msg("Failed to run pusher.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to push new code to gaia infrastructure repository."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
