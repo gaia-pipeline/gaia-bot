@@ -50,7 +50,7 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
-	tmp, err := ioutil.TempDir("checkout", "build")
+	tmp, err := ioutil.TempDir("", "build")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to checkout the PR"); err != nil {
