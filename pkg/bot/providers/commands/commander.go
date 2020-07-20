@@ -18,9 +18,11 @@ const imageTag = "gaiapipeline/testing:%s-%d"
 
 // Config has the configuration options for the commander
 type Config struct {
-	Token     string
-	Username  string
-	InfraRepo string
+	GitToken       string
+	GitUsername    string
+	DockerToken    string
+	DockerUsername string
+	InfraRepo      string
 }
 
 // Dependencies defines the dependencies of this command
@@ -68,8 +70,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"REPOSITORY="+repo,
 		"BRANCH="+branch,
 		"FOLDER="+tmp,
-		"DOCKER_TOKEN="+c.Token,
-		"DOCKER_USERNAME="+c.Username,
+		"DOCKER_TOKEN="+c.DockerToken,
+		"DOCKER_USERNAME="+c.DockerUsername,
 	)
 	if err := cmd.Run(); err != nil {
 		log.Error().Err(err).Msg("Failed to run fetcher.")
@@ -88,8 +90,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"REPO="+c.InfraRepo,
 		"TAG="+tag,
 		"FOLDER="+tmp,
-		"GIT_TOKEN="+c.Token,
-		"GIT_USERNAME="+c.Username,
+		"GIT_TOKEN="+c.GitToken,
+		"GIT_USERNAME="+c.GitUsername,
 	)
 	if err := cmd.Run(); err != nil {
 		log.Error().Err(err).Msg("Failed to run pusher.")
