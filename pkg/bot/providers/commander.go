@@ -6,5 +6,5 @@ import (
 
 // Commander represents the commands which this bot is capable of performing
 type Commander interface {
-	Test(ctx context.Context, owner string, repo string, number int, branch string, tag string)
+	Test(ctx context.Context, owner string, repo string, number int, branch string)
 }

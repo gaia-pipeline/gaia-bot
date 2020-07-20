@@ -42,7 +42,7 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string, tag string) {
+func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Running Test."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
@@ -57,12 +57,13 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		}
 		return
 	}
-	buildTag := fmt.Sprintf(imageTag, branch, number)
+	tag := fmt.Sprintf(imageTag, branch, number)
 
 	// Run the docker build
 	n := strconv.Itoa(number)
 	cmd := exec.Command("/usr/local/bin/fetch_pr.sh")
 	cmd.Env = append(os.Environ(), ""+
+		"TAG="+tag,
 		"PR_NUMBER="+n,
 		"REPOSITORY="+repo,
 		"BRANCH="+branch,
@@ -80,13 +81,15 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 
 	// Run the pusher
-	log.Debug().Msgf("pusing image tag %s", buildTag)
+	log.Debug().Msgf("pusing image tag %s", tag)
 
 	cmd = exec.Command("/usr/local/bin/push_tag.sh")
 	cmd.Env = append(os.Environ(), ""+
 		"REPO="+c.InfraRepo,
-		"TAG="+buildTag,
+		"TAG="+tag,
 		"FOLDER="+tmp,
+		"GIT_TOKEN="+c.Token,
+		"GIT_USERNAME="+c.Username,
 	)
 	if err := cmd.Run(); err != nil {
 		log.Error().Err(err).Msg("Failed to run pusher.")

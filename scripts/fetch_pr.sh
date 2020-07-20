@@ -3,6 +3,7 @@
 set -e
 
 pr="${PR_NUMBER}"
+tag="${TAG}"
 repo="${REPOSITORY}"
 branch="${BRANCH}"
 folder="${FOLDER}"
@@ -39,6 +40,11 @@ if [[ -z "${docker_username}" ]]; then
   exit 1
 fi
 
+if [[ -z "${tag}" ]]; then
+  echo "TAG is empty. Please set.";
+  exit 1
+fi
+
 # Check out PR
 cd "${folder}"
 mkdir -p gaia
@@ -60,11 +66,8 @@ make download
 make release
 
 # build docker image
-tag="gaiapipeline/testing:${branch}-${pr}"
 docker build -t "${tag}" ./docker -f ./docker/Dockerfile
 
 # push image to gaia test repo
 echo "${docker_token}" | docker login --username "${docker_username}" --password-stdin
 docker push "${tag}"
-# This output will be used by the gaia-bot to signal flux to deploy this image once it's done pushing.
-echo "${tag}"

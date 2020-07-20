@@ -44,7 +44,7 @@ func init() {
 	flag.StringVar(&rootArgs.commenter.Token, "github-token", "", "--github-token asdf")
 	flag.StringVar(&rootArgs.commander.Token, "bot-token", "", "--bot-token asdf")
 	flag.StringVar(&rootArgs.commander.Username, "bot-username", "", "--bot-username asdf")
-	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "https://github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository https:...")
+	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository github.com/")
 	flag.Parse()
 }
 

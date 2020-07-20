@@ -62,12 +62,6 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 		return nil
 	}
 	cmd := strings.TrimPrefix(comment, commentPrefix)
-	var params string
-	if strings.Contains(cmd, " ") {
-		split := strings.Split(cmd, " ")
-		cmd = split[0]
-		params = split[1]
-	}
 	log.Debug().Msg("Checking if handle has access to the command...")
 	user, err := s.Store.GetUser(ctx, handle)
 	if err != nil {
@@ -99,8 +93,7 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	switch cmd {
 	case "test":
 		log.Info().Msg("Starting update...")
-		log.Debug().Str("params", params).Msg("Passing in params")
-		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, params)
+		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number, repo.Head.Ref)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
