@@ -76,7 +76,6 @@ type Comment struct {
 // Issue is information about the context of the comment. It should be checked if it's a PR.
 type Issue struct {
 	PullRequest PullRequest `json:"pull_request,omitempty"`
-	Sender      Sender      `json:"sender"`
 }
 
 // PullRequest is the pull request context of an issue comment if the comment happened on a PR.
@@ -89,6 +88,7 @@ type Payload struct {
 	Action  string  `json:"action"`
 	Issue   Issue   `json:"issue"`
 	Comment Comment `json:"comment"`
+	Sender  Sender  `json:"sender"`
 }
 
 func signBody(secret, body []byte) []byte {
@@ -173,8 +173,8 @@ func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 		if p.Issue.PullRequest.URL == "" {
 			return c.String(http.StatusOK, "skipped; not in a pull request context")
 		}
-
-		if err := b.Dependencies.Starter.Start(ctx, p.Issue.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
+		b.Logger.Debug().Interface("payload", p).Msg("Got payload... processing.")
+		if err := b.Dependencies.Starter.Start(ctx, p.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
 
