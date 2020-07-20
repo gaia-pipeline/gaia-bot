@@ -17,5 +17,7 @@ ADD ./build/linux/${GOARCH}/gaia-bot /app/
 ADD ./scripts/fetch_pr.sh /usr/local/bin
 ADD ./scripts/push_tag.sh /usr/local/bin
 
+EXPOSE 9998
+
 WORKDIR /app/
 ENTRYPOINT [ "/app/gaia-bot" ]
