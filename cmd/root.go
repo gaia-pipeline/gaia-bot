@@ -5,6 +5,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/sshexecutioner"
+
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 
 	"github.com/rs/zerolog"
@@ -26,6 +28,7 @@ var (
 		server    server.Config
 		commenter commenter.Config
 		commander commands.Config
+		sshConfig sshexecutioner.Config
 		auth      auth.Config
 		debug     bool
 	}
@@ -49,6 +52,8 @@ func init() {
 	flag.StringVar(&rootArgs.auth.DockerToken, "docker-token", "", "--docker-token asdf")
 	flag.StringVar(&rootArgs.auth.DockerUsername, "docker-username", "", "--docker-username asdf")
 	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository github.com/")
+	flag.StringVar(&rootArgs.sshConfig.Address, "ssh-address", "", "--ssh-address 1.2.3.4")
+	flag.StringVar(&rootArgs.sshConfig.Username, "ssh-username", "gaia", "--ssh-username gaia")
 	flag.Parse()
 }
 
@@ -59,10 +64,15 @@ func main() {
 	})
 	rootArgs.commenter.Auth = rootArgs.auth
 	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
+
+	sshExecutioner := sshexecutioner.NewSshExecutioner(rootArgs.sshConfig, sshexecutioner.Dependencies{
+		Logger: log,
+	})
 	rootArgs.commander.Auth = rootArgs.auth
 	commander := commands.NewCommander(rootArgs.commander, commands.Dependencies{
-		Logger:    log,
-		Commenter: commenter,
+		Logger:      log,
+		Commenter:   commenter,
+		Executioner: sshExecutioner,
 	})
 	starter := github.NewGithubStarter(github.Config{}, github.Dependencies{
 		Logger:    log,

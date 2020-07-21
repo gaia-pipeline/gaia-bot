@@ -26,8 +26,9 @@ type Config struct {
 
 // Dependencies defines the dependencies of this command
 type Dependencies struct {
-	Logger    zerolog.Logger
-	Commenter providers.Commenter
+	Logger      zerolog.Logger
+	Commenter   providers.Commenter
+	Executioner providers.Executioner
 }
 
 // Commander is a bot commander.
@@ -60,37 +61,29 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 	tag := fmt.Sprintf(imageTag, branch, number)
 
-	// Run the docker build
+	// Run the docker build over SSH
+	fetcher, err := ioutil.ReadFile("/usr/local/bin/fetch_pr.sh")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read fetcher pr file")
+		return
+	}
 	n := strconv.Itoa(number)
-	cmd := exec.Command("/usr/local/bin/fetch_pr.sh")
-	cmd.Env = append(os.Environ(), ""+
-		"TAG="+tag,
-		"PR_NUMBER="+n,
-		"REPOSITORY="+repo,
-		"BRANCH="+branch,
-		"FOLDER="+tmp,
-		"DOCKER_TOKEN="+c.Auth.DockerToken,
-		"DOCKER_USERNAME="+c.Auth.DockerUsername,
-	)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
-		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
-		log.Error().Err(err).Msg("Failed to run fetch and build.")
-		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to run fetch and build."); err != nil {
-			log.Error().Err(err).Msg("Failed to add comment.")
-			return
-		}
+	if err := c.Executioner.Execute(ctx, string(fetcher), map[string]string{
+		"TAG":             tag,
+		"PR_NUMBER":       n,
+		"REPOSITORY":      repo,
+		"BRANCH":          branch,
+		"FOLDER":          tmp,
+		"DOCKER_TOKEN":    c.Auth.DockerToken,
+		"DOCKER_USERNAME": c.Auth.DockerUsername,
+	}); err != nil {
+		log.Error().Err(err).Msg("Failed to execute command.")
 		return
 	}
 
 	// Run the pusher
 	log.Debug().Msgf("pusing image tag %s", tag)
-
-	cmd = exec.Command("/usr/local/bin/push_tag.sh")
+	cmd := exec.Command("/usr/local/bin/push_tag.sh")
 	cmd.Env = append(os.Environ(), ""+
 		"REPO="+c.InfraRepo,
 		"TAG="+tag,
@@ -98,8 +91,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"GIT_TOKEN="+c.Auth.GithubToken,
 		"GIT_USERNAME="+c.Auth.GithubUsername,
 	)
-	stdout = bytes.Buffer{}
-	stderr = bytes.Buffer{}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
