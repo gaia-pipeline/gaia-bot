@@ -51,7 +51,6 @@ mkdir -p gaia
 cd gaia
 git clone https://github.com/gaia-pipeline/gaia.git
 cd gaia
-gaia=$(pwd)
 git fetch origin pull/"${pr}"/head:"${branch}"
 git checkout "${branch}"
 
@@ -62,15 +61,13 @@ echo 'export NVM_DIR=$HOME/.nvm' >> ~/.bash_profile
 touch $HOME/.nvmrc
 echo 'source $NVM_DIR/nvm.sh' >> ~/.bash_profile
 source ~/.bash_profile
-cd "${gaia}"
 nvm install v12.6.0 || true
 npm cache clean --force || true
 make download
 make release
 
 # build docker image
-cd "${gaia}"
-docker build -t "${tag}" "${gaia}/docker" -f "${gaia}/docker/Dockerfile"
+docker build -t "${tag}" . -f ./docker/Dockerfile
 
 # push image to gaia test repo
 echo "${docker_token}" | docker login --username "${docker_username}" --password-stdin
