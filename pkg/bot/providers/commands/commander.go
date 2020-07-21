@@ -45,7 +45,7 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 // Test will deploy the pull request from the context of the comment made.
 func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
-	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Running Test."); err != nil {
+	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Building new test image."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
@@ -79,8 +79,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	if err := cmd.Run(); err != nil {
 		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
 		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
-		log.Error().Err(err).Msg("Failed to run fetcher.")
-		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch PR."); err != nil {
+		log.Error().Err(err).Msg("Failed to run fetch and build.")
+		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to run fetch and build."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
 			return
 		}

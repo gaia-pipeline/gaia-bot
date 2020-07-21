@@ -66,6 +66,14 @@ npm cache clean --force || true
 make download
 make release
 
+trap cleanup EXIT
+
+function cleanup {
+  # Docker prune system and earase gaia image after push.
+  docker system prune --force
+  docker rmi "${tag}" --force
+}
+
 # build docker image
 docker build -t "${tag}" . -f ./docker/Dockerfile
 
