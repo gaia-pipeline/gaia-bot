@@ -2,12 +2,9 @@
 package commands
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"strconv"
 
 	"github.com/rs/zerolog"
@@ -62,13 +59,8 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	tag := fmt.Sprintf(imageTag, branch, number)
 
 	// Run the docker build over SSH
-	fetcher, err := ioutil.ReadFile("/usr/local/bin/fetch_pr.sh")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to read fetcher pr file")
-		return
-	}
 	n := strconv.Itoa(number)
-	if err := c.Executioner.Execute(ctx, string(fetcher), map[string]string{
+	if err := c.Executioner.Execute(ctx, "/usr/local/bin/fetch_pr.sh", map[string]string{
 		"TAG":             tag,
 		"PR_NUMBER":       n,
 		"REPOSITORY":      repo,
@@ -77,28 +69,23 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"DOCKER_TOKEN":    c.Auth.DockerToken,
 		"DOCKER_USERNAME": c.Auth.DockerUsername,
 	}); err != nil {
-		log.Error().Err(err).Msg("Failed to execute command.")
+		log.Error().Err(err).Msg("Failed to fetch and build pr.")
+		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch and build pr."); err != nil {
+			log.Error().Err(err).Msg("Failed to add comment.")
+			return
+		}
 		return
 	}
 
 	// Run the pusher
-	log.Debug().Msgf("pusing image tag %s", tag)
-	cmd := exec.Command("/usr/local/bin/push_tag.sh")
-	cmd.Env = append(os.Environ(), ""+
-		"REPO="+c.InfraRepo,
-		"TAG="+tag,
-		"FOLDER="+tmp,
-		"GIT_TOKEN="+c.Auth.GithubToken,
-		"GIT_USERNAME="+c.Auth.GithubUsername,
-	)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
-		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
-		log.Error().Err(err).Msg("Failed to run pusher.")
+	if err := c.Executioner.Execute(ctx, "/usr/local/bin/push_tag.sh", map[string]string{
+		"REPO":         c.InfraRepo,
+		"TAG":          tag,
+		"FOLDER":       tmp,
+		"GIT_TOKEN":    c.Auth.GithubToken,
+		"GIT_USERNAME": c.Auth.GithubUsername,
+	}); err != nil {
+		log.Error().Err(err).Msg("Failed to execute command.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to push new code to gaia infrastructure repository."); err != nil {
 			log.Error().Err(err).Msg("Failed to add comment.")
 			return
