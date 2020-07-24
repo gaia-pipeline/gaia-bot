@@ -93,7 +93,7 @@ func (s *Starter) Start(ctx context.Context, handle string, commentURL string, p
 	switch cmd {
 	case "test":
 		log.Info().Msg("Starting update...")
-		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number, repo.Head.Ref)
+		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
@@ -114,6 +114,7 @@ type owner struct {
 type repoInfo struct {
 	Owner owner  `json:"owner"`
 	Name  string `json:"name"`
+	URL   string `json:"html_url"`
 }
 
 // base is the base of the forked repository

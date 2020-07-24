@@ -45,7 +45,7 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, owner string, repo string, number int, branch string) {
+func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo string, number int, branch string) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Building new test image."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
@@ -61,7 +61,7 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 	n := strconv.Itoa(number)
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
-		"<repo_replace>":            c.InfraRepo,
+		"<repo_url_replace>":        repoURL,
 		"<tag_replace>":             tag,
 		"<pr_replace>":              n,
 		"<branch_replace>":          branch,
