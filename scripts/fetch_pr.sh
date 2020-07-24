@@ -47,8 +47,8 @@ function main() {
   cd "${folder}"
   mkdir -p gaia
   cd gaia
-  git clone "${repo}"
-  cd gaia
+  git clone "${repo}" repo
+  cd repo
   git fetch origin pull/"${pr}"/head:"${branch}"
   git checkout "${branch}"
 
