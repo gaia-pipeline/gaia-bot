@@ -5,7 +5,7 @@ set -u
 set -o pipefail
 
 repo="<repo_replace>"
-folder="<folder_replace>"
+folder=$(mktemp -d -t push-XXXXXXXXXX)
 tag="<tag_replace>"
 git_token="<git_token_replace>"
 git_username="<git_username_replace>"

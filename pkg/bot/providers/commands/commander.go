@@ -51,15 +51,6 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
-	tmp, err := ioutil.TempDir("", "build")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create temp directory to checkout pr.")
-		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to checkout the PR"); err != nil {
-			log.Error().Err(err).Msg("Failed to add comment.")
-			return
-		}
-		return
-	}
 	tag := fmt.Sprintf(imageTag, branch, number)
 
 	// Run the docker build over SSH
@@ -73,7 +64,6 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 		"<tag_replace>":             tag,
 		"<pr_replace>":              n,
 		"<branch_replace>":          branch,
-		"<folder_replace>":          tmp,
 		"<docker_token_replace>":    c.Auth.DockerToken,
 		"<docker_username_replace>": c.Auth.DockerUsername,
 	}); err != nil {
@@ -94,7 +84,6 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
 		"<repo_replace>":         c.InfraRepo,
 		"<tag_replace>":          tag,
-		"<folder_replace>":       tmp,
 		"<git_token_replace>":    c.Auth.GithubToken,
 		"<git_username_replace>": c.Auth.GithubUsername,
 	}); err != nil {

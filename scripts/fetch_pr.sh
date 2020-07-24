@@ -6,7 +6,7 @@ set -o pipefail
 
 pr="<pr_replace>"
 branch="<branch_replace>"
-folder="<folder_replace>"
+folder=$(mktemp -d -t fetch-XXXXXXXXXX)
 tag="<tag_replace>"
 docker_token="<docker_token_replace>"
 docker_username="<docker_username_replace>"
