@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"golang.org/x/crypto/ssh"
-
 	"github.com/rs/zerolog"
+	"golang.org/x/crypto/ssh"
 )
 
 // Config has the configuration options for the commenter
@@ -84,7 +83,7 @@ func (e *SSHExec) Execute(ctx context.Context, script string, replace map[string
 
 	// replace placeholders
 	for k, v := range replace {
-		strings.ReplaceAll(script, k, v)
+		script = strings.ReplaceAll(script, k, v)
 	}
 
 	if err := session.Run(script); err != nil {
