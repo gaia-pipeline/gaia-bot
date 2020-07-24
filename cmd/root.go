@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/executioner"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/executer"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 
@@ -28,7 +28,7 @@ var (
 		server        server.Config
 		commenter     commenter.Config
 		commander     commands.Config
-		executeConfig executioner.Config
+		executeConfig executer.Config
 		auth          auth.Config
 		debug         bool
 	}
@@ -52,6 +52,10 @@ func init() {
 	flag.StringVar(&rootArgs.auth.DockerToken, "docker-token", "", "--docker-token asdf")
 	flag.StringVar(&rootArgs.auth.DockerUsername, "docker-username", "", "--docker-username asdf")
 	flag.StringVar(&rootArgs.commander.InfraRepo, "infra-repository", "github.com/gaia-pipeline/gaia-infrastructure.git", "--infra-repository github.com/")
+	flag.StringVar(&rootArgs.executeConfig.Address, "ssh-address", "", "--ssh-address 1.2.3.4")
+	flag.StringVar(&rootArgs.executeConfig.Port, "ssh-port", "22", "--ssh-address 22")
+	flag.StringVar(&rootArgs.executeConfig.Username, "ssh-username", "gaia", "--ssh-username gaia")
+	flag.StringVar(&rootArgs.executeConfig.SSHKeyLocation, "ssh-key-location", "/data/ssh/id_rsa", "--ssh-key-location /data/ssh/id_rsa")
 	flag.Parse()
 }
 
@@ -63,7 +67,7 @@ func main() {
 	rootArgs.commenter.Auth = rootArgs.auth
 	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
 
-	sshExecutioner := executioner.NewLocalExecutioner(rootArgs.executeConfig, executioner.Dependencies{
+	sshExecutioner := executer.NewSSHExecutioner(rootArgs.executeConfig, executer.Dependencies{
 		Logger: log,
 	})
 	rootArgs.commander.Auth = rootArgs.auth

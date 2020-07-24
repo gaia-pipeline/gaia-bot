@@ -25,7 +25,7 @@ type Config struct {
 type Dependencies struct {
 	Logger      zerolog.Logger
 	Commenter   providers.Commenter
-	Executioner providers.Executioner
+	Executioner providers.Executer
 }
 
 // Commander is a bot commander.
@@ -59,8 +59,13 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	tag := fmt.Sprintf(imageTag, branch, number)
 
 	// Run the docker build over SSH
+	script, err := ioutil.ReadFile("/usr/local/bin/fetch_pr.sh")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read script.")
+		return
+	}
 	n := strconv.Itoa(number)
-	if err := c.Executioner.Execute(ctx, "/usr/local/bin/fetch_pr.sh", map[string]string{
+	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
 		"TAG":             tag,
 		"PR_NUMBER":       n,
 		"REPOSITORY":      repo,
@@ -78,7 +83,12 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 
 	// Run the pusher
-	if err := c.Executioner.Execute(ctx, "/usr/local/bin/push_tag.sh", map[string]string{
+	script, err = ioutil.ReadFile("/usr/local/bin/push_tag.sh")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read script.")
+		return
+	}
+	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
 		"REPO":         c.InfraRepo,
 		"TAG":          tag,
 		"FOLDER":       tmp,
