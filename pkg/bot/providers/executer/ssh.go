@@ -81,13 +81,6 @@ func (e *SSHExec) Execute(ctx context.Context, script string, args map[string]st
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 
-	for k, v := range args {
-		if err := session.Setenv(k, v); err != nil {
-			log.Error().Err(err).Msg("Failed to set environment property for remote session.")
-			return err
-		}
-	}
-
 	if err := session.Run(script); err != nil {
 		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")
 		log.Debug().Str("stderr", stderr.String()).Msg("Error of the command...")
