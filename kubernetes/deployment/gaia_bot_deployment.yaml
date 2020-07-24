@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: cronohub
+  name: gaia-bot
+  labels:
+    app: gaia-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gaia-bot
+  template:
+    metadata:
+      labels:
+        app: gaia-bot
+        app.kubernetes.io/name: gaia-bot
+        app.kubernetes.io/instance: gaia-bot
+    spec:
+      containers:
+        - name: gaia
+          image: gaiapipeline/gaia-bot:v0.0.1
+          ports:
+            - containerPort: 9998
+              name: bot-http
+          volumeMounts:
+            - name: remote-ssh
+              mountPath: "/data/ssh"
+      volumes:
+        - name: remote-ssh
+          secret:
+            secretName: bot-ssh-key
+            defaultMode: 0400

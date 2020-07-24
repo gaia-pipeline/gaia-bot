@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: cronohub
+  name: bot-service
+  labels:
+    app: bot-service
+    app.kubernetes.io/name: bot-service
+    app.kubernetes.io/instance: bot-service
+spec:
+  selector:
+    app: bot-app
+    app.kubernetes.io/name: bot-app
+    app.kubernetes.io/instance: bot-app
+  ports:
+    - name: bot-port
+      port: 9995
+      targetPort: bot-http
