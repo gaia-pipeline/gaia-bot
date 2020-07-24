@@ -61,6 +61,7 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 	n := strconv.Itoa(number)
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
+		"<repo_replace>":            c.InfraRepo,
 		"<tag_replace>":             tag,
 		"<pr_replace>":              n,
 		"<branch_replace>":          branch,

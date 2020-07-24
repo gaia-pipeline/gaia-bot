@@ -6,6 +6,7 @@ set -o pipefail
 
 pr="<pr_replace>"
 branch="<branch_replace>"
+repo="<repo_replace>"
 folder=$(mktemp -d -t fetch-XXXXXXXXXX)
 tag="<tag_replace>"
 docker_token="<docker_token_replace>"
@@ -46,7 +47,7 @@ function main() {
   cd "${folder}"
   mkdir -p gaia
   cd gaia
-  git clone https://github.com/gaia-pipeline/gaia.git
+  git clone "${repo}"
   cd gaia
   git fetch origin pull/"${pr}"/head:"${branch}"
   git checkout "${branch}"
