@@ -13,7 +13,11 @@ import (
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 )
 
-const imageTag = "gaiapipeline/testing:%s-%d"
+const (
+	imageTag        = "gaiapipeline/testing:%s-%d"
+	fetchPrFilenane = "/usr/local/bin/fetch_pr.sh"
+	pushTagFilename = "/usr/local/bin/push_tag.sh"
+)
 
 // Config has the configuration options for the commander
 type Config struct {
@@ -59,20 +63,19 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	tag := fmt.Sprintf(imageTag, branch, number)
 
 	// Run the docker build over SSH
-	script, err := ioutil.ReadFile("/usr/local/bin/fetch_pr.sh")
+	script, err := ioutil.ReadFile(fetchPrFilenane)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read script.")
 		return
 	}
 	n := strconv.Itoa(number)
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
-		"TAG":             tag,
-		"PR_NUMBER":       n,
-		"REPOSITORY":      repo,
-		"BRANCH":          branch,
-		"FOLDER":          tmp,
-		"DOCKER_TOKEN":    c.Auth.DockerToken,
-		"DOCKER_USERNAME": c.Auth.DockerUsername,
+		"<tag_replace>":             tag,
+		"<pr_replace>":              n,
+		"<branch_replace>":          branch,
+		"<folder_replace>":          tmp,
+		"<docker_token_replace>":    c.Auth.DockerToken,
+		"<docker_username_replace>": c.Auth.DockerUsername,
 	}); err != nil {
 		log.Error().Err(err).Msg("Failed to fetch and build pr.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch and build pr."); err != nil {
@@ -83,17 +86,17 @@ func (c *Commander) Test(ctx context.Context, owner string, repo string, number 
 	}
 
 	// Run the pusher
-	script, err = ioutil.ReadFile("/usr/local/bin/push_tag.sh")
+	script, err = ioutil.ReadFile(pushTagFilename)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read script.")
 		return
 	}
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
-		"REPO":         c.InfraRepo,
-		"TAG":          tag,
-		"FOLDER":       tmp,
-		"GIT_TOKEN":    c.Auth.GithubToken,
-		"GIT_USERNAME": c.Auth.GithubUsername,
+		"<repo_replace>":         c.InfraRepo,
+		"<tag_replace>":          tag,
+		"<folder_replace>":       tmp,
+		"<git_token_replace>":    c.Auth.GithubToken,
+		"<git_username_replace>": c.Auth.GithubUsername,
 	}); err != nil {
 		log.Error().Err(err).Msg("Failed to execute command.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to push new code to gaia infrastructure repository."); err != nil {

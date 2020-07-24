@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 
@@ -38,9 +39,9 @@ func NewSSHExecutioner(cfg Config, deps Dependencies) *SSHExec {
 }
 
 // Executioner defines an execution method.
-func (e *SSHExec) Execute(ctx context.Context, script string, args map[string]string) error {
+func (e *SSHExec) Execute(ctx context.Context, script string, replace map[string]string) error {
 	// Connect to machine via SSH and feed in the command.
-	log := e.Logger.With().Interface("agrs", args).Logger()
+	log := e.Logger.With().Interface("replace", replace).Logger()
 	log.Debug().Msg("Estabilish SSH session...")
 
 	key, err := ioutil.ReadFile(e.SSHKeyLocation)
@@ -80,6 +81,11 @@ func (e *SSHExec) Execute(ctx context.Context, script string, args map[string]st
 	var stderr bytes.Buffer
 	session.Stdout = &stdout
 	session.Stderr = &stderr
+
+	// replace placeholders
+	for k, v := range replace {
+		strings.ReplaceAll(script, k, v)
+	}
 
 	if err := session.Run(script); err != nil {
 		log.Debug().Str("stdout", stdout.String()).Msg("Output of the command...")

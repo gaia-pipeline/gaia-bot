@@ -4,6 +4,13 @@ set -e
 set -u
 set -o pipefail
 
+pr="<pr_replace>"
+branch="<branch_replace>"
+folder="<folder_replace>"
+tag="<tag_replace>"
+docker_token="<docker_token_replace>"
+docker_username="<docker_username_replace>"
+
 function main() {
   if [[ -z "${pr}" ]]; then
     echo "PR_NUMBER number is empty. Please set.";
@@ -64,40 +71,6 @@ function cleanup {
   docker system prune --force
   docker rmi "${tag}" --force || true
 }
-
-# Parse the opt values.
-while getopts ':p:t:b:f:o:u:' OPTION; do
-  case "$OPTION" in
-    p)
-      pr="$OPTARG"
-      ;;
-
-    t)
-      tag="$OPTARG"
-      ;;
-
-    b)
-      branch="$OPTARG"
-      ;;
-
-    f)
-      folder="$OPTARG"
-      ;;
-
-    o)
-      docker_token="$OPTARG"
-      ;;
-
-    u)
-      docker_username="$OPTARG"
-      ;;
-    ?)
-      echo "script usage: $(basename "${0}") [-p pr] [-t tag] [-b branch] [-f folder] [-o docker_token] [-u docker_username]" >&2
-      exit 1
-      ;;
-  esac
-done
-shift "$(($OPTIND -1))"
 
 # Run the script
 main

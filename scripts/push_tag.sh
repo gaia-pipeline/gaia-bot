@@ -4,6 +4,12 @@ set -e
 set -u
 set -o pipefail
 
+repo="<repo_replace>"
+folder="<folder_replace>"
+tag="<tag_replace>"
+git_token="<git_token_replace>"
+git_username="<git_username_replace>"
+
 function main() {
   if [[ -z "${tag}" ]]; then
     echo "Tag is empty. Please set.";
@@ -35,36 +41,6 @@ function main() {
   git commit -am 'Updated tag for gaia deployment'
   git push origin master
 }
-
-# Parse the opt values.
-while getopts ':r:t:f:o:u:' OPTION; do
-  case "$OPTION" in
-    t)
-      tag="$OPTARG"
-      ;;
-
-    r)
-      repo="$OPTARG"
-      ;;
-
-    f)
-      folder="$OPTARG"
-      ;;
-
-    o)
-      git_token="$OPTARG"
-      ;;
-
-    u)
-      git_username="$OPTARG"
-      ;;
-    ?)
-      echo "script usage: $(basename "${0}") [-r repo] [-t tag] [-f folder] [-o git_token] [-u git_username]" >&2
-      exit 1
-      ;;
-  esac
-done
-shift "$(($OPTIND -1))"
 
 # Run the script
 main
