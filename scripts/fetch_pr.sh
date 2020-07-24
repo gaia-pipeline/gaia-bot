@@ -43,6 +43,9 @@ function main() {
     exit 1
   fi
 
+  # Load up the environment
+  source ~/.bash_profile
+
   # Check out PR
   cd "${folder}"
   mkdir -p gaia

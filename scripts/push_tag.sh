@@ -31,6 +31,8 @@ function main() {
     exit 1
   fi
 
+  source ~/.bash_profile
+
   # checkout infra code
   cd "${folder}"
   mkdir -p infra
