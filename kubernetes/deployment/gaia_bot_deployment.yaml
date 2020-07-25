@@ -2,32 +2,86 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: cronohub
-  name: gaia-bot
+  name: bot-app
   labels:
-    app: gaia-bot
+    app: bot-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gaia-bot
+      app: bot-app
   template:
     metadata:
       labels:
-        app: gaia-bot
-        app.kubernetes.io/name: gaia-bot
-        app.kubernetes.io/instance: gaia-bot
+        app: bot-app
+        app.kubernetes.io/name: bot-app
+        app.kubernetes.io/instance: bot-app
     spec:
       containers:
         - name: gaia
           image: gaiapipeline/gaia-bot:v0.0.1
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9998
               name: bot-http
           volumeMounts:
             - name: remote-ssh
               mountPath: "/data/ssh"
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bot-db-creds
+                  key: POSTGRES_PASSWORD
+            - name: SSH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: ssh_username
+            - name: SSH_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: ssh_address
+            - name: GITHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: git_username
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: git_token
+            - name: DOCKER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: docker_token
+            - name: DOCKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: docker_username
+            - name: HOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: hook_secret
+          args:
+            - --gaia-bot-db-hostname=bot-db-service.cronohub.svc.cluster.local:5432
+            - --gaia-bot-db-database=bot
+            - --gaia-bot-db-username=bot
+            - --gaia-bot-db-password=$(DB_PASSWORD)
+            - --hook-secret=$(HOOK_SECRET)
+            - --github-token=$(GITHUB_TOKEN)
+            - --github-username=$(GITHUB_USERNAME)
+            - --docker-token=$(DOCKER_TOKEN)
+            - --docker-username=$(DOCKER_USERNAME)
+            - --ssh-address=$(SSH_ADDRESS)
+            - --ssh-username=$(SSH_USERNAME)
       volumes:
         - name: remote-ssh
           secret:
-            secretName: bot-ssh-key
+            secretName: bot-ssh-key # generated separately.
             defaultMode: 0400

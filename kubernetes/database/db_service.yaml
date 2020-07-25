@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: cronohub
+  name: bot-db-service
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: bot-db
+  clusterIP: None

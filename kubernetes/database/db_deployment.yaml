@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: cronohub
+  name: bot-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bot-db
+  template:
+    metadata:
+      name: bot-db
+      labels:
+        app: bot-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:11
+          env:
+            - name: POSTGRES_USER
+              value: bot
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bot-db-password
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              subPath: data # important so it gets mounted correctly instead of adding a lost-and-found folder.
+              name: bot-db-data
+            - mountPath: /docker-entrypoint-initdb.d/bot_initdb.sql
+              subPath: bot_initdb.sql
+              name: bootstrap-script
+      volumes:
+        - name: bot-db-data
+          persistentVolumeClaim:
+            claimName: do-storage-bot-db
+        - name: bootstrap-script
+          configMap:
+            name: bot-initdb-script
