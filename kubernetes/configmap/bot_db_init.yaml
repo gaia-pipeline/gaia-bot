@@ -5,7 +5,7 @@ metadata:
   namespace: cronohub
 data:
   bot_initdb.sql:
-    create table users (id serial PRIMARY KEY,handle VARCHAR ( 255 ) UNIQUE NOT NULL,commands VARCHAR ( 255 ) UNIQUE NOT NULL);
+    create table users (id serial PRIMARY KEY, handle VARCHAR ( 255 ) UNIQUE NOT NULL, commands VARCHAR ( 255 ));
     insert into users (handle, commands) values ('michelvocks', 'test,');
     insert into users (handle, commands) values ('speza', 'test,');
     insert into users (handle, commands) values ('Skarlso', 'test,');
