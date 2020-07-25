@@ -7,3 +7,5 @@
     This will increase the number of images and size since a single Gaia image is almost 4 gigs.
     Which means we need a cleanup of some kind.
     - This wasn't working because for that we would have needed a machine based executor.
+    
+- [ ] Create logs of the bash scripts running for later review on the Hetzner machine.
