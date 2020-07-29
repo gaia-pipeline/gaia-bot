@@ -31,8 +31,8 @@ type Config struct {
 
 // Dependencies defines the dependencies of this server.
 type Dependencies struct {
-	Logger   zerolog.Logger
-	Listener providers.Listener
+	Logger    zerolog.Logger
+	Processor providers.Processor
 }
 
 // GaiaBot is the bot's main handler.
@@ -147,7 +147,7 @@ func parseRequest(secret []byte, req *http.Request) (Hook, error) {
 	return h, err
 }
 
-// GitWebHook creates a hook handler with an injected labeler.
+// Hook creates a hook handler.
 func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		h, err := parseRequest([]byte(b.Config.HookSecret), c.Request())
@@ -174,7 +174,7 @@ func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 			return c.String(http.StatusOK, "skipped; not in a pull request context")
 		}
 		b.Logger.Debug().Interface("payload", p).Msg("Got payload... processing.")
-		if err := b.Dependencies.Listener.Listen(ctx, p.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
+		if err := b.Dependencies.Processor.Process(ctx, p.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
 

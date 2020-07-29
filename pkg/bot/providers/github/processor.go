@@ -39,19 +39,19 @@ type Dependencies struct {
 	Logger    zerolog.Logger
 }
 
-// Listener is a github based bot.
-type Listener struct {
+// Processor is a github based comment event processor.
+type Processor struct {
 	Config
 	Dependencies
 }
 
-// NewGithubListener creates a new GithubListener
-func NewGithubListener(cfg Config, deps Dependencies) *Listener {
-	return &Listener{Config: cfg, Dependencies: deps}
+// NewGithubProcessor creates a new Processor
+func NewGithubProcessor(cfg Config, deps Dependencies) *Processor {
+	return &Processor{Config: cfg, Dependencies: deps}
 }
 
-// Listen starts to listen on PR events and respond accordingly.
-func (s *Listener) Listen(ctx context.Context, handle string, commentURL string, pullURL string) error {
+// Processor processes a comment event created on a PR
+func (s *Processor) Process(ctx context.Context, handle string, commentURL string, pullURL string) error {
 	log := s.Logger.With().Str("handle", handle).Logger()
 	comment, err := s.extractComment(ctx, commentURL)
 	if err != nil {
@@ -130,7 +130,7 @@ type repo struct {
 }
 
 // extractPullRequestInfo return with the details of the repository.
-func (s *Listener) extractPullRequestInfo(ctx context.Context, pullUrl string) (repo, error) {
+func (s *Processor) extractPullRequestInfo(ctx context.Context, pullUrl string) (repo, error) {
 	r := repo{}
 	if err := s.get(ctx, pullUrl, &r); err != nil {
 		return repo{}, err
@@ -139,7 +139,7 @@ func (s *Listener) extractPullRequestInfo(ctx context.Context, pullUrl string) (
 }
 
 // extractComment gets a comment from a comment url.
-func (s *Listener) extractComment(ctx context.Context, commentUrl string) (string, error) {
+func (s *Processor) extractComment(ctx context.Context, commentUrl string) (string, error) {
 	s.Logger.Debug().Str("comment-url", commentUrl).Msg("extacting comment from url")
 	c := comment{}
 	if err := s.get(ctx, commentUrl, &c); err != nil {
@@ -148,7 +148,7 @@ func (s *Listener) extractComment(ctx context.Context, commentUrl string) (strin
 	return c.Body, nil
 }
 
-func (s *Listener) get(ctx context.Context, url string, v interface{}) error {
+func (s *Processor) get(ctx context.Context, url string, v interface{}) error {
 	log := s.Logger.With().Str("url", url).Logger()
 	tr := &http.Transport{
 		MaxIdleConns:       10,

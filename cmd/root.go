@@ -5,16 +5,14 @@ import (
 	"flag"
 	"os"
 
-	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/executer"
-
-	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
-
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commands"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commenter"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/executer"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/github"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/postgres"
 	"github.com/gaia-pipeline/gaia-bot/pkg/server"
@@ -76,14 +74,14 @@ func main() {
 		Commenter:   commenter,
 		Executioner: sshExecutioner,
 	})
-	listener := github.NewGithubListener(github.Config{}, github.Dependencies{
+	listener := github.NewGithubProcessor(github.Config{}, github.Dependencies{
 		Logger:    log,
 		Store:     storer,
 		Commander: commander,
 	})
 	gaiaBot := bot.NewBot(rootArgs.bot, bot.Dependencies{
-		Logger:   log,
-		Listener: listener,
+		Logger:    log,
+		Processor: listener,
 	})
 
 	botServer := server.NewServer(rootArgs.server, server.Dependencies{
