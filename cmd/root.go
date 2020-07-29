@@ -76,14 +76,14 @@ func main() {
 		Commenter:   commenter,
 		Executioner: sshExecutioner,
 	})
-	starter := github.NewGithubStarter(github.Config{}, github.Dependencies{
+	listener := github.NewGithubListener(github.Config{}, github.Dependencies{
 		Logger:    log,
 		Store:     storer,
 		Commander: commander,
 	})
 	gaiaBot := bot.NewBot(rootArgs.bot, bot.Dependencies{
-		Logger:  log,
-		Starter: starter,
+		Logger:   log,
+		Listener: listener,
 	})
 
 	botServer := server.NewServer(rootArgs.server, server.Dependencies{

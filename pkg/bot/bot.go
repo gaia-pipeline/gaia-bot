@@ -31,8 +31,8 @@ type Config struct {
 
 // Dependencies defines the dependencies of this server.
 type Dependencies struct {
-	Logger  zerolog.Logger
-	Starter providers.Starter
+	Logger   zerolog.Logger
+	Listener providers.Listener
 }
 
 // GaiaBot is the bot's main handler.
@@ -174,7 +174,7 @@ func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 			return c.String(http.StatusOK, "skipped; not in a pull request context")
 		}
 		b.Logger.Debug().Interface("payload", p).Msg("Got payload... processing.")
-		if err := b.Dependencies.Starter.Start(ctx, p.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
+		if err := b.Dependencies.Listener.Listen(ctx, p.Sender.Login, p.Comment.URL, p.Issue.PullRequest.URL); err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
 

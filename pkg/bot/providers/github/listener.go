@@ -28,7 +28,7 @@ type comment struct {
 	Body string `json:"body"`
 }
 
-// Config has the configuration options for the starter
+// Config has the configuration options for the listener
 type Config struct {
 }
 
@@ -39,19 +39,19 @@ type Dependencies struct {
 	Logger    zerolog.Logger
 }
 
-// Starter is a github based bot.
-type Starter struct {
+// Listener is a github based bot.
+type Listener struct {
 	Config
 	Dependencies
 }
 
-// NewGithubStarter creates a new GithubStarter
-func NewGithubStarter(cfg Config, deps Dependencies) *Starter {
-	return &Starter{Config: cfg, Dependencies: deps}
+// NewGithubListener creates a new GithubListener
+func NewGithubListener(cfg Config, deps Dependencies) *Listener {
+	return &Listener{Config: cfg, Dependencies: deps}
 }
 
-// Start starts an update if the user has access.
-func (s *Starter) Start(ctx context.Context, handle string, commentURL string, pullURL string) error {
+// Listen starts to listen on PR events and respond accordingly.
+func (s *Listener) Listen(ctx context.Context, handle string, commentURL string, pullURL string) error {
 	log := s.Logger.With().Str("handle", handle).Logger()
 	comment, err := s.extractComment(ctx, commentURL)
 	if err != nil {
@@ -130,7 +130,7 @@ type repo struct {
 }
 
 // extractPullRequestInfo return with the details of the repository.
-func (s *Starter) extractPullRequestInfo(ctx context.Context, pullUrl string) (repo, error) {
+func (s *Listener) extractPullRequestInfo(ctx context.Context, pullUrl string) (repo, error) {
 	r := repo{}
 	if err := s.get(ctx, pullUrl, &r); err != nil {
 		return repo{}, err
@@ -139,7 +139,7 @@ func (s *Starter) extractPullRequestInfo(ctx context.Context, pullUrl string) (r
 }
 
 // extractComment gets a comment from a comment url.
-func (s *Starter) extractComment(ctx context.Context, commentUrl string) (string, error) {
+func (s *Listener) extractComment(ctx context.Context, commentUrl string) (string, error) {
 	s.Logger.Debug().Str("comment-url", commentUrl).Msg("extacting comment from url")
 	c := comment{}
 	if err := s.get(ctx, commentUrl, &c); err != nil {
@@ -148,7 +148,7 @@ func (s *Starter) extractComment(ctx context.Context, commentUrl string) (string
 	return c.Body, nil
 }
 
-func (s *Starter) get(ctx context.Context, url string, v interface{}) error {
+func (s *Listener) get(ctx context.Context, url string, v interface{}) error {
 	log := s.Logger.With().Str("url", url).Logger()
 	tr := &http.Transport{
 		MaxIdleConns:       10,
