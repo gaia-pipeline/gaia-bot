@@ -62,6 +62,15 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 		return nil
 	}
 	cmd := strings.TrimPrefix(comment, commentPrefix)
+
+	var args []string
+	if strings.Contains(cmd, " ") {
+		split := strings.Split(cmd, " ")
+		cmd = split[0]
+		args = append(args, split[1:]...)
+		log.Debug().Str("cmd", cmd).Strs("args", args).Msg("Received command with parameters.")
+	}
+
 	log.Debug().Msg("Checking if handle has access to the command...")
 	user, err := s.Store.GetUser(ctx, handle)
 	if err != nil {
@@ -89,21 +98,14 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 		return err
 	}
 
-	var args []string
-	if strings.Contains(cmd, " ") {
-		split := strings.Split(cmd, " ")
-		cmd = split[0]
-		args = append(args, split[1:]...)
-	}
-
 	// launch the Command with a new context and return
 	switch cmd {
 	case "test":
-		log.Info().Msg("Starting update...")
 		tag := ""
 		if len(args) > 0 {
 			tag = args[0]
 		}
+		log.Info().Str("tag", tag).Msg("Starting update...")
 		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, tag)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
