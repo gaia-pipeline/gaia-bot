@@ -92,6 +92,7 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 	var args []string
 	if strings.Contains(cmd, " ") {
 		split := strings.Split(cmd, " ")
+		cmd = split[0]
 		args = append(args, split[1:]...)
 	}
 
