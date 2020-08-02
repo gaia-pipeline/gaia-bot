@@ -45,13 +45,16 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo string, number int, branch string) {
+func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo string, number int, branch string, paramTag string) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Building new test image."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
 	tag := fmt.Sprintf(imageTag, branch, number)
+	if paramTag != "" {
+		tag = paramTag
+	}
 
 	// Run the docker build over SSH
 	script, err := ioutil.ReadFile(fetchPrFilenane)

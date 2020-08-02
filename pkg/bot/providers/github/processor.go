@@ -89,11 +89,21 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 		return err
 	}
 
+	var args []string
+	if strings.Contains(cmd, " ") {
+		split := strings.Split(cmd, " ")
+		args = append(args, split[1:]...)
+	}
+
 	// launch the Command with a new context and return
 	switch cmd {
 	case "test":
 		log.Info().Msg("Starting update...")
-		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref)
+		tag := ""
+		if len(args) > 0 {
+			tag = args[0]
+		}
+		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, tag)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
