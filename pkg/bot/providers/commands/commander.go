@@ -19,6 +19,13 @@ const (
 	pushTagFilename = "/usr/local/bin/push_tag.sh"
 )
 
+const (
+	helpMessage = "Hello, I'm Gaia Bot. I help the team build, test and manage PRs and other issues.\n" +
+		"These are my available commands:\n" +
+		"`/test`: Apply the current PR to our testing infrastructure at https://gaia.cronohub.org.\n" +
+		"Example: `/test`, `/test gaiapipeline/testing:tag-name`"
+)
+
 // Config has the configuration options for the commander
 type Config struct {
 	Auth      auth.Config
@@ -100,6 +107,14 @@ func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo
 	}
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "The new test version has been pushed."); err != nil {
 		log.Error().Err(err).Msg("Failed to add comment.")
+		return
+	}
+}
+
+// Help displays information about what commands are available and their usage.
+func (c *Commander) Help(ctx context.Context, owner string, repo string, number int) {
+	if err := c.Commenter.AddComment(ctx, owner, repo, number, helpMessage); err != nil {
+		c.Logger.Error().Err(err).Msg("Failed to add comment.")
 		return
 	}
 }

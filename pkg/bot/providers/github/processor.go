@@ -107,6 +107,8 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 		}
 		log.Info().Str("tag", tag).Msg("Starting update...")
 		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, tag)
+	case "help":
+		go s.Dependencies.Commander.Help(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number)
 	default:
 		return fmt.Errorf("command %s not found", cmd)
 	}
