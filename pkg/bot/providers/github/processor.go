@@ -26,6 +26,7 @@ type user struct {
 type comment struct {
 	User user   `json:"user"`
 	Body string `json:"body"`
+	ID   int    `json:"id"`
 }
 
 // Config has the configuration options for the listener
@@ -57,11 +58,11 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 	if err != nil {
 		return err
 	}
-	if !strings.HasPrefix(comment, commentPrefix) {
-		log.Debug().Str("comment", comment).Msg("Ignored comment as it doesn't have the bot prefix.")
+	if !strings.HasPrefix(comment.Body, commentPrefix) {
+		log.Debug().Interface("comment", comment).Msg("Ignored comment as it doesn't have the bot prefix.")
 		return nil
 	}
-	cmd := strings.TrimPrefix(comment, commentPrefix)
+	cmd := strings.TrimPrefix(comment.Body, commentPrefix)
 
 	var args []string
 	if strings.Contains(cmd, " ") {
@@ -106,7 +107,7 @@ func (s *Processor) Process(ctx context.Context, handle string, commentURL strin
 			tag = args[0]
 		}
 		log.Info().Str("tag", tag).Msg("Starting update...")
-		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, tag)
+		go s.Dependencies.Commander.Test(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.URL, repo.Base.Repo.Name, repo.Number, repo.Head.Ref, comment.ID)
 	case "help":
 		go s.Dependencies.Commander.Help(context.Background(), repo.Base.Repo.Owner.Login, repo.Base.Repo.Name, repo.Number)
 	default:
@@ -154,13 +155,13 @@ func (s *Processor) extractPullRequestInfo(ctx context.Context, pullUrl string) 
 }
 
 // extractComment gets a comment from a comment url.
-func (s *Processor) extractComment(ctx context.Context, commentUrl string) (string, error) {
+func (s *Processor) extractComment(ctx context.Context, commentUrl string) (comment, error) {
 	s.Logger.Debug().Str("comment-url", commentUrl).Msg("extacting comment from url")
 	c := comment{}
 	if err := s.get(ctx, commentUrl, &c); err != nil {
-		return "", err
+		return c, err
 	}
-	return c.Body, nil
+	return c, nil
 }
 
 func (s *Processor) get(ctx context.Context, url string, v interface{}) error {

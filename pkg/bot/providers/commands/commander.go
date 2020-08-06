@@ -3,6 +3,7 @@ package commands
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -14,7 +15,8 @@ import (
 )
 
 const (
-	imageTag        = "gaiapipeline/testing:%s-%d"
+	sumFormat       = "%s-%d-%d"
+	imageTag        = "gaiapipeline/testing:%x"
 	fetchPrFilenane = "/usr/local/bin/fetch_pr.sh"
 	pushTagFilename = "/usr/local/bin/push_tag.sh"
 )
@@ -23,7 +25,7 @@ const (
 	helpMessage = "Hello, I'm Gaia Bot. I help the team build, test and manage PRs and other issues.\n" +
 		"These are my available commands:\n" +
 		"`/test`: Apply the current PR to our testing infrastructure at https://gaia.cronohub.org.\n" +
-		"Example: `/test`, `/test gaiapipeline/testing:tag-name`"
+		"Example: `/test`"
 )
 
 // Config has the configuration options for the commander
@@ -52,16 +54,17 @@ func NewCommander(cfg Config, deps Dependencies) *Commander {
 }
 
 // Test will deploy the pull request from the context of the comment made.
-func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo string, number int, branch string, paramTag string) {
+func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo string, number int, branch string, commentID int) {
 	log := c.Logger.With().Int("number", number).Str("branch", branch).Logger()
 	if err := c.Commenter.AddComment(ctx, owner, repo, number, "Command received. Building new test image."); err != nil {
 		log.Error().Err(err).Msg("Failed to add ack comment.")
 		return
 	}
-	tag := fmt.Sprintf(imageTag, branch, number)
-	if paramTag != "" {
-		tag = paramTag
-	}
+
+	// Create a tag based on the branch, number and commentID
+	tagSum := fmt.Sprintf(sumFormat, branch, number, commentID)
+	sum := sha256.Sum256([]byte(tagSum))
+	tag := fmt.Sprintf(imageTag, sum)
 
 	// Run the docker build over SSH
 	script, err := ioutil.ReadFile(fetchPrFilenane)
