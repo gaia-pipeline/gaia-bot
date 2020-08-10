@@ -1,4 +1,3 @@
-// commands will handle all the commands this bot supports.
 package commands
 
 import (
@@ -108,7 +107,7 @@ func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo
 		}
 		return
 	}
-	if err := c.Commenter.AddComment(ctx, owner, repo, number, "The new test version has been pushed."); err != nil {
+	if err := c.Commenter.AddComment(ctx, owner, repo, number, "New version pushed. Please wait for 5 minutes for it to propagate."); err != nil {
 		log.Error().Err(err).Msg("Failed to add comment.")
 		return
 	}
