@@ -39,6 +39,7 @@ func (d *DockerConverter) LoadValueFromFile(f string) (string, error) {
 		return f, nil
 	}
 	// Load the content from file
+	d.Logger.Debug().Str("value", f).Msg("Loading value from secret file.")
 	data, err := ioutil.ReadFile(f)
 	if err != nil {
 		d.Logger.Error().Err(err).Msg("Failed to read docker secret file.")

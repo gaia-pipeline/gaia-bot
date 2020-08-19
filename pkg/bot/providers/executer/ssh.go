@@ -56,8 +56,13 @@ func (e *SSHExec) Execute(ctx context.Context, script string, replace map[string
 		log.Error().Err(err).Msg("unable to parse private key")
 		return err
 	}
+	username, err := e.Converter.LoadValueFromFile(e.Username)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to load address")
+		return err
+	}
 	config := &ssh.ClientConfig{
-		User: e.Username,
+		User: username,
 		Auth: []ssh.AuthMethod{
 			// Use the PublicKeys method for remote authentication.
 			ssh.PublicKeys(signer),
