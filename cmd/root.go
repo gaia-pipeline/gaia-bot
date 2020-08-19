@@ -5,8 +5,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/environment"
-
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commands"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/commenter"
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/environment"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/executer"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/github"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/postgres"
