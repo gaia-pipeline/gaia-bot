@@ -38,6 +38,7 @@ type Dependencies struct {
 	Logger      zerolog.Logger
 	Commenter   providers.Commenter
 	Executioner providers.Executer
+	Converter   providers.EnvironmentConverter
 }
 
 // Commander is a bot commander.
@@ -72,13 +73,23 @@ func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo
 		return
 	}
 	n := strconv.Itoa(number)
+	dockerToken, err := c.Dependencies.Converter.LoadValueFromFile(c.Auth.DockerToken)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed LoadValueFromFile.")
+		return
+	}
+	dockerUsername, err := c.Dependencies.Converter.LoadValueFromFile(c.Auth.DockerUsername)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed LoadValueFromFile.")
+		return
+	}
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
 		"<repo_url_replace>":        repoURL,
 		"<tag_replace>":             tag,
 		"<pr_replace>":              n,
 		"<branch_replace>":          branch,
-		"<docker_token_replace>":    c.Auth.DockerToken,
-		"<docker_username_replace>": c.Auth.DockerUsername,
+		"<docker_token_replace>":    dockerToken,
+		"<docker_username_replace>": dockerUsername,
 	}); err != nil {
 		log.Error().Err(err).Msg("Failed to fetch and build pr.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to fetch and build pr."); err != nil {
@@ -94,11 +105,21 @@ func (c *Commander) Test(ctx context.Context, owner string, repoURL string, repo
 		log.Error().Err(err).Msg("Failed to read script.")
 		return
 	}
+	githubToken, err := c.Dependencies.Converter.LoadValueFromFile(c.Auth.GithubToken)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed LoadValueFromFile.")
+		return
+	}
+	githubUsername, err := c.Dependencies.Converter.LoadValueFromFile(c.Auth.GithubUsername)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed LoadValueFromFile.")
+		return
+	}
 	if err := c.Executioner.Execute(ctx, string(script), map[string]string{
 		"<repo_replace>":         c.InfraRepo,
 		"<tag_replace>":          tag,
-		"<git_token_replace>":    c.Auth.GithubToken,
-		"<git_username_replace>": c.Auth.GithubUsername,
+		"<git_token_replace>":    githubToken,
+		"<git_username_replace>": githubUsername,
 	}); err != nil {
 		log.Error().Err(err).Msg("Failed to execute command.")
 		if err := c.Commenter.AddComment(ctx, owner, repo, number, "Failed to push new code to gaia infrastructure repository."); err != nil {

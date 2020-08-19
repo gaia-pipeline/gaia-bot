@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
 	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/auth"
 )
 
@@ -17,7 +18,8 @@ type Config struct {
 
 // Dependencies defines the dependencies of this commenter
 type Dependencies struct {
-	Logger zerolog.Logger
+	Logger    zerolog.Logger
+	Converter providers.EnvironmentConverter
 }
 
 // PullRequestsService is an interface defining the Wrapper Interface
@@ -36,8 +38,13 @@ type Commenter struct {
 // NewCommenter creates a new Commenter
 func NewCommenter(cfg Config, deps Dependencies) *Commenter {
 	ctx := context.Background()
+	token, err := deps.Converter.LoadValueFromFile(cfg.Auth.GithubToken)
+	if err != nil {
+		deps.Logger.Error().Err(err).Msg("Failed to load value from file for github token.")
+		return nil
+	}
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: cfg.Auth.GithubToken},
+		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)

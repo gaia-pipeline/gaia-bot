@@ -39,9 +39,11 @@ function main() {
   cd infra
   git clone https://"${git_username}":"${git_token}"@"${repo}" infra
   cd infra
-  sed -i "s,image:.*,image: ${tag},g" workloads/gaia_deployment.yaml
+  sed -i "s,image:.*,image: ${tag},g" gaia.yaml
   git commit -am 'Updated tag for gaia deployment'
   git push origin master
+  # update the service
+  docker stack deploy -c gaia.yaml gaia
 }
 
 # Run the script

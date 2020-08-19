@@ -5,6 +5,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers/environment"
+
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 
@@ -59,20 +61,30 @@ func init() {
 
 func main() {
 	log := zerolog.New(os.Stderr)
+	converter := environment.NewDockerConverter(environment.Config{}, environment.Dependencies{Logger: log})
 	storer := postgres.NewPostgresStore(rootArgs.store, postgres.Dependencies{
-		Logger: log,
+		Logger:    log,
+		Converter: converter,
 	})
 	rootArgs.commenter.Auth = rootArgs.auth
-	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{Logger: log})
+	commenter := commenter.NewCommenter(rootArgs.commenter, commenter.Dependencies{
+		Logger:    log,
+		Converter: converter,
+	})
+	if commenter == nil {
+		log.Fatal().Msg("Failed to load github token for commenter.")
+	}
 
 	sshExecutioner := executer.NewSSHExecutioner(rootArgs.executeConfig, executer.Dependencies{
-		Logger: log,
+		Logger:    log,
+		Converter: converter,
 	})
 	rootArgs.commander.Auth = rootArgs.auth
 	commander := commands.NewCommander(rootArgs.commander, commands.Dependencies{
 		Logger:      log,
 		Commenter:   commenter,
 		Executioner: sshExecutioner,
+		Converter:   converter,
 	})
 	listener := github.NewGithubProcessor(github.Config{}, github.Dependencies{
 		Logger:    log,
@@ -82,6 +94,7 @@ func main() {
 	gaiaBot := bot.NewBot(rootArgs.bot, bot.Dependencies{
 		Logger:    log,
 		Processor: listener,
+		Converter: converter,
 	})
 
 	botServer := server.NewServer(rootArgs.server, server.Dependencies{

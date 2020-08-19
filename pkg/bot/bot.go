@@ -33,6 +33,7 @@ type Config struct {
 type Dependencies struct {
 	Logger    zerolog.Logger
 	Processor providers.Processor
+	Converter providers.EnvironmentConverter
 }
 
 // GaiaBot is the bot's main handler.
@@ -150,7 +151,11 @@ func parseRequest(secret []byte, req *http.Request) (Hook, error) {
 // Hook creates a hook handler.
 func (b *GaiaBot) Hook(ctx context.Context) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		h, err := parseRequest([]byte(b.Config.HookSecret), c.Request())
+		secret, err := b.Converter.LoadValueFromFile(b.Config.HookSecret)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		h, err := parseRequest([]byte(secret), c.Request())
 		if err != nil {
 			return c.String(http.StatusBadRequest, err.Error())
 		}

@@ -8,6 +8,8 @@ import (
 
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/gaia-pipeline/gaia-bot/pkg/bot/providers"
 )
 
 // Config has the configuration options for the commenter
@@ -20,7 +22,8 @@ type Config struct {
 
 // Dependencies defines the dependencies of this commenter
 type Dependencies struct {
-	Logger zerolog.Logger
+	Logger    zerolog.Logger
+	Converter providers.EnvironmentConverter
 }
 
 // SSHExec is an executioner which can execute commands on a remote machine.
@@ -62,7 +65,12 @@ func (e *SSHExec) Execute(ctx context.Context, script string, replace map[string
 		// TODO: ssh.FixedHostKey(hostKey),
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := ssh.Dial("tcp", e.Address+":"+e.Port, config)
+	address, err := e.Converter.LoadValueFromFile(e.Address)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to load address")
+		return err
+	}
+	client, err := ssh.Dial("tcp", address+":"+e.Port, config)
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to connect to build server.")
 		return err
