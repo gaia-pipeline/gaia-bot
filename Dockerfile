@@ -1,4 +1,4 @@
-FROM golang:1.13.8-stretch
+FROM golang:1.16-stretch
 ARG GOARCH=amd64
 
 RUN apt-get update && apt-get install -y git build-essential apt-transport-https ca-certificates curl gnupg-agent software-properties-common
